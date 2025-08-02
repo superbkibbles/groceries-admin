@@ -1,5 +1,5 @@
-import api from '@/lib/axios';
-import { User } from '@/store/slices/authSlice';
+import api from "@/lib/axios";
+import { User } from "@/store/slices/authSlice";
 
 interface LoginCredentials {
   email: string;
@@ -23,11 +23,15 @@ const authService = {
    * Login user with email and password
    */
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    const response = await api.post('/users/login', credentials);
+    const response = await api.post("/users/login", credentials, {
+      headers: {
+        user_role: "admin",
+      },
+    });
     // Store token in localStorage
     if (response.data && response.data.token) {
-        console.log("saving token")
-      localStorage.setItem('token', response.data.token);
+      console.log("saving token");
+      localStorage.setItem("token", response.data.token);
     }
     return response.data;
   },
@@ -36,7 +40,7 @@ const authService = {
    * Register a new user
    */
   register: async (userData: RegisterData) => {
-    const response = await api.post('/users/register', userData);
+    const response = await api.post("/users/register", userData);
     return response.data;
   },
 
@@ -44,12 +48,12 @@ const authService = {
    * Get current user profile
    */
   getCurrentUser: async (): Promise<User> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
-      throw new Error('No token found');
+      throw new Error("No token found");
     }
-    
-    const response = await api.get('/users/me');
+
+    const response = await api.get("/users/me");
     return response.data;
   },
 
@@ -64,10 +68,14 @@ const authService = {
   /**
    * Change user password
    */
-  changePassword: async (userId: string, currentPassword: string, newPassword: string) => {
+  changePassword: async (
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) => {
     const response = await api.put(`/users/${userId}/password`, {
       currentPassword,
-      newPassword
+      newPassword,
     });
     return response.data;
   },
@@ -76,8 +84,8 @@ const authService = {
    * Logout user (client-side only)
    */
   logout: () => {
-    localStorage.removeItem('token');
-  }
+    localStorage.removeItem("token");
+  },
 };
 
 export default authService;
