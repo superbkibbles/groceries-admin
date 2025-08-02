@@ -1,13 +1,29 @@
-import React, { ReactNode } from 'react';
-import { useRouter } from 'next/router';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { toggleSidebar } from '@/store/slices/uiSlice';
-import { logout } from '@/store/slices/authSlice';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, LayoutDashboard, Package, Users, ShoppingCart, Settings, LogOut, Bell } from 'lucide-react';
-import Link from 'next/link';
+import React, { ReactNode } from "react";
+import { useRouter } from "next/router";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { toggleSidebar } from "@/store/slices/uiSlice";
+import { logout } from "@/store/slices/authSlice";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Menu,
+  X,
+  LayoutDashboard,
+  Package,
+  Users,
+  ShoppingCart,
+  Settings,
+  LogOut,
+  Bell,
+} from "lucide-react";
+import Link from "next/link";
+import Image from "next/image";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -21,26 +37,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
   const handleLogout = async () => {
     await dispatch(logout());
-    router.push('/login');
+    router.push("/login");
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Products', href: '/dashboard/products', icon: Package },
-    { name: 'Orders', href: '/dashboard/orders', icon: ShoppingCart },
-    { name: 'Customers', href: '/dashboard/customers', icon: Users },
-    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Products", href: "/dashboard/products", icon: Package },
+    { name: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
+    { name: "Customers", href: "/dashboard/customers", icon: Users },
+    { name: "Settings", href: "/dashboard/settings", icon: Settings },
   ];
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-sidebar text-sidebar-foreground transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
           <Link href="/dashboard" className="flex items-center space-x-2">
-            <span className="text-xl font-bold">E-Commerce</span>
+            <span className="text-xl font-bold">
+              <Image
+                src="/logo.png"
+                alt="logo"
+                width={70}
+                height={90}
+                className="object-contain"
+              />
+            </span>
           </Link>
           <Button
             variant="ghost"
@@ -53,12 +79,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </div>
         <nav className="mt-5 px-2 space-y-1">
           {navigation.map((item) => {
-            const isActive = router.pathname === item.href || router.pathname.startsWith(`${item.href}/`);
+            const isActive =
+              router.pathname === item.href ||
+              router.pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center px-4 py-2 text-sm rounded-md ${isActive ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-sidebar-accent/50'}`}
+                className={`flex items-center px-4 py-2 text-sm rounded-md ${
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "hover:bg-sidebar-accent/50"
+                }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
                 {item.name}
@@ -89,18 +121,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
                     <Avatar className="h-8 w-8">
                       <AvatarImage src="" alt="User" />
-                      <AvatarFallback>{user?.firstName?.charAt(0) || 'U'}</AvatarFallback>
+                      <AvatarFallback>
+                        {user?.firstName?.charAt(0) || "U"}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem className="font-medium">
-                    {user ? `${user.firstName} ${user.lastName}` : 'User'}
+                    {user ? `${user.firstName} ${user.lastName}` : "User"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/dashboard/profile")}
+                  >
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
@@ -114,9 +153,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );
