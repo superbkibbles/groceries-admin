@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import {
   Card,
@@ -25,7 +26,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -35,63 +35,38 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Plus, Search, MoreHorizontal, Edit, Trash, Eye } from "lucide-react";
 import { toast } from "sonner";
-
-// Mock product data
-const mockProducts = [
-  {
-    id: "1",
-    name: "Wireless Headphones",
-    price: 99.99,
-    category: "Electronics",
-    stock: 45,
-    status: "In Stock",
-  },
-  {
-    id: "2",
-    name: "Cotton T-Shirt",
-    price: 24.99,
-    category: "Clothing",
-    stock: 120,
-    status: "In Stock",
-  },
-  {
-    id: "3",
-    name: "Smart Watch",
-    price: 199.99,
-    category: "Electronics",
-    stock: 18,
-    status: "Low Stock",
-  },
-  {
-    id: "4",
-    name: "Desk Lamp",
-    price: 34.99,
-    category: "Home",
-    stock: 0,
-    status: "Out of Stock",
-  },
-  {
-    id: "5",
-    name: "Leather Wallet",
-    price: 49.99,
-    category: "Accessories",
-    stock: 65,
-    status: "In Stock",
-  },
-];
+import { AppDispatch, RootState } from "@/store";
+import { fetchProducts, deleteProduct } from "@/store/slices/productSlice";
 
 export default function Products() {
   const router = useRouter();
-  const [products, setProducts] = useState(mockProducts);
+  const dispatch = useDispatch<AppDispatch>();
+  const { products, error } = useSelector((state: RootState) => state.products);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+
+  // Load products on component mount
+  useEffect(() => {
+    dispatch(fetchProducts({}));
+  }, [dispatch]);
+
+  // Handle Redux error states
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   // Filter products based on search query
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      (product.categories &&
+        product.categories.some((cat) =>
+          cat.toLowerCase().includes(searchQuery.toLowerCase())
+        ))
   );
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,13 +90,16 @@ export default function Products() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteProduct = () => {
+  const handleDeleteProduct = async () => {
     if (productToDelete) {
-      // In a real app, you would call an API to delete the product
-      setProducts(products.filter((product) => product.id !== productToDelete));
-      toast.success("Product deleted successfully");
-      setIsDeleteDialogOpen(false);
-      setProductToDelete(null);
+      try {
+        await dispatch(deleteProduct(productToDelete));
+        toast.success("Product deleted successfully");
+        setIsDeleteDialogOpen(false);
+        setProductToDelete(null);
+      } catch {
+        toast.error("Failed to delete product");
+      }
     }
   };
 
@@ -181,59 +159,79 @@ export default function Products() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredProducts.map((product) => (
-                      <TableRow key={product.id}>
-                        <TableCell className="font-medium">
-                          {product.name}
-                        </TableCell>
-                        <TableCell>${product.price.toFixed(2)}</TableCell>
-                        <TableCell>{product.category}</TableCell>
-                        <TableCell>{product.stock}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              product.status === "In Stock"
-                                ? "bg-green-100 text-green-800"
-                                : product.status === "Low Stock"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {product.status}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => handleViewProduct(product.id)}
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleEditProduct(product.id)}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => confirmDelete(product.id)}
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    filteredProducts.map((product) => {
+                      // Determine status based on stock quantity
+                      const getProductStatus = (stockQuantity: number) => {
+                        if (stockQuantity === 0)
+                          return {
+                            text: "Out of Stock",
+                            className: "bg-red-100 text-red-800",
+                          };
+                        if (stockQuantity < 20)
+                          return {
+                            text: "Low Stock",
+                            className: "bg-yellow-100 text-yellow-800",
+                          };
+                        return {
+                          text: "In Stock",
+                          className: "bg-green-100 text-green-800",
+                        };
+                      };
+
+                      const status = getProductStatus(product.stock_quantity);
+
+                      return (
+                        <TableRow key={product.id}>
+                          <TableCell className="font-medium">
+                            {product.name}
+                          </TableCell>
+                          <TableCell>${product.price.toFixed(2)}</TableCell>
+                          <TableCell>
+                            {product.categories?.length > 0
+                              ? product.categories.join(", ")
+                              : "Uncategorized"}
+                          </TableCell>
+                          <TableCell>{product.stock_quantity}</TableCell>
+                          <TableCell>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${status.className}`}
+                            >
+                              {status.text}
+                            </span>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleViewProduct(product.id)}
+                                >
+                                  <Eye className="mr-2 h-4 w-4" />
+                                  View details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleEditProduct(product.id)}
+                                >
+                                  <Edit className="mr-2 h-4 w-4" />
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => confirmDelete(product.id)}
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>

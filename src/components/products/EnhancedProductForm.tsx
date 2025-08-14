@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import ImageUpload from "./ImageUpload";
+import { Category } from "@/services/categoryService";
 
 interface EnhancedProductFormProps {
   initialData?: {
@@ -36,15 +37,8 @@ interface EnhancedProductFormProps {
   };
   onSubmit: (data: EnhancedProductFormProps["initialData"]) => void;
   isSubmitting?: boolean;
+  categories?: Category[]; // Categories from Redux
 }
-
-const categories = [
-  { id: "electronics", name: "Electronics" },
-  { id: "clothing", name: "Clothing" },
-  { id: "home", name: "Home" },
-  { id: "books", name: "Books" },
-  { id: "accessories", name: "Accessories" },
-];
 
 const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   initialData = {
@@ -59,6 +53,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   },
   onSubmit,
   isSubmitting = false,
+  categories: availableCategories = [],
 }) => {
   const router = useRouter();
   const [formData, setFormData] = useState(initialData);
@@ -255,7 +250,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
+                    {availableCategories.map((category) => (
                       <SelectItem key={category.id} value={category.id}>
                         {category.name}
                       </SelectItem>

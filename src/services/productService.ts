@@ -8,8 +8,8 @@ export interface Product {
   images?: string[];
   categories: string[]; // Array of category IDs
   stock_quantity: number; // Renamed to match backend
-  sku: string;
-  attributes: Record<string, string | number | boolean>; // Generic attributes object for variations
+  sku?: string;
+  attributes?: Record<string, string | number | boolean>; // Generic attributes object for variations
   created_at: string; // Snake case to match backend
   updated_at: string; // Snake case to match backend
 }

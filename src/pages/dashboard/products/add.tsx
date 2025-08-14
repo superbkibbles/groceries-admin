@@ -1,20 +1,42 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import EnhancedProductForm from "@/components/products/EnhancedProductForm";
 import { toast } from "sonner";
-import { productService } from "@/services";
 import { Product } from "@/services/productService";
+import { AppDispatch, RootState } from "@/store";
+import { createProduct, uploadProductImage } from "@/store/slices/productSlice";
+import { fetchCategories } from "@/store/slices/categorySlice";
 
 // Type for our product form data - matches the backend structure
 type ProductFormData = Omit<Product, "id" | "created_at" | "updated_at">;
 
 export default function AddProduct() {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const { loading, error } = useSelector((state: RootState) => state.products);
+  const { categories } = useSelector((state: RootState) => state.categories);
 
-  const handleSubmit = async (data: ProductFormData) => {
-    setIsSubmitting(true);
+  // Load categories on component mount
+  useEffect(() => {
+    dispatch(fetchCategories());
+  }, [dispatch]);
+
+  // Handle Redux error states
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
+  // Helper function to check if item is a File
+  const isFile = (item: unknown): item is File => {
+    return item instanceof File;
+  };
+
+  const handleSubmit = async (data: ProductFormData | undefined) => {
+    if (!data) return;
     try {
       // The data structure now matches the backend exactly
       const productData: Omit<Product, "id" | "created_at" | "updated_at"> = {
@@ -28,29 +50,35 @@ export default function AddProduct() {
         images: [],
       };
 
-      // Create the product
-      const createdProduct = await productService.createProduct(productData);
+      // Create the product using Redux
+      const resultAction = await dispatch(createProduct(productData));
 
-      // Handle image uploads if there are images (if using separate upload endpoint)
-      if (data.images && data.images.length > 0) {
-        for (const imageUrl of data.images) {
-          // Check if this is a File object (new upload) or a string URL
-          if (imageUrl instanceof File) {
-            await productService.uploadProductImage(
-              createdProduct.id,
-              imageUrl
-            );
+      if (createProduct.fulfilled.match(resultAction)) {
+        const createdProduct = resultAction.payload;
+
+        // Handle image uploads if there are images (if using separate upload endpoint)
+        if (data.images && data.images.length > 0) {
+          for (const imageItem of data.images) {
+            // Check if this is a File object (new upload) or a string URL
+            if (isFile(imageItem)) {
+              await dispatch(
+                uploadProductImage({
+                  productId: createdProduct.id,
+                  imageFile: imageItem,
+                })
+              );
+            }
           }
         }
-      }
 
-      toast.success("Product created successfully");
-      router.push("/dashboard/products");
+        toast.success("Product created successfully");
+        router.push("/dashboard/products");
+      } else {
+        throw new Error("Failed to create product");
+      }
     } catch (error) {
       console.error("Error creating product:", error);
       toast.error("Failed to create product");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -66,7 +94,8 @@ export default function AddProduct() {
 
         <EnhancedProductForm
           onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
+          isSubmitting={loading}
+          categories={categories}
         />
       </div>
     </DashboardLayout>

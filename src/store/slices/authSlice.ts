@@ -45,6 +45,7 @@ export const login = createAsyncThunk(
       // Store token in localStorage is handled in the service
 
       return { user, token };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || "Login failed");
     }
@@ -71,6 +72,7 @@ export const checkAuthStatus = createAsyncThunk(
       const user = await authService.getCurrentUser();
 
       return { user, token };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       authService.logout(); // Clear token on error
       return rejectWithValue(

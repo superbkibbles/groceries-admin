@@ -1,10 +1,18 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import EnhancedProductForm from "@/components/products/EnhancedProductForm";
 import { toast } from "sonner";
-import { productService } from "@/services";
 import { Product } from "@/services/productService";
+import { AppDispatch, RootState } from "@/store";
+import {
+  fetchProductById,
+  updateProduct,
+  uploadProductImage,
+  clearCurrentProduct,
+} from "@/store/slices/productSlice";
+import { fetchCategories } from "@/store/slices/categorySlice";
 
 // Type for our product form data - matches the backend structure
 type ProductFormData = Omit<Product, "id" | "created_at" | "updated_at">;
@@ -12,40 +20,45 @@ type ProductFormData = Omit<Product, "id" | "created_at" | "updated_at">;
 export default function EditProduct() {
   const router = useRouter();
   const { id } = router.query;
-  const [product, setProduct] = useState<ProductFormData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { currentProduct, loading, error } = useSelector(
+    (state: RootState) => state.products
+  );
+  const { categories } = useSelector((state: RootState) => state.categories);
 
   useEffect(() => {
+    // Load categories
+    dispatch(fetchCategories());
+
+    // Load product if ID is available
     if (id && typeof id === "string") {
-      const fetchProduct = async () => {
-        try {
-          setIsLoading(true);
-          const productData = await productService.getProductById(id);
-
-          // The product data from backend already matches our form structure
-          const formData: ProductFormData = {
-            ...productData,
-          };
-
-          setProduct(formData);
-        } catch (error) {
-          console.error("Error fetching product:", error);
-          toast.error("Failed to load product");
-          router.push("/dashboard/products");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchProduct();
+      dispatch(fetchProductById(id));
     }
-  }, [id, router]);
 
-  const handleSubmit = async (data: ProductFormData) => {
+    // Cleanup on unmount
+    return () => {
+      dispatch(clearCurrentProduct());
+    };
+  }, [id, dispatch]);
+
+  // Handle Redux error states
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+      router.push("/dashboard/products");
+    }
+  }, [error, router]);
+
+  // Helper function to check if item is a File
+  const isFile = (item: unknown): item is File => {
+    return item instanceof File;
+  };
+
+  const handleSubmit = async (data: ProductFormData | undefined) => {
+    if (!data) return;
     if (!id || typeof id !== "string") return;
 
-    setIsSubmitting(true);
     try {
       // The data structure now matches the backend exactly
       const productData: Partial<Product> = {
@@ -59,32 +72,44 @@ export default function EditProduct() {
         images: data.images || [],
       };
 
-      // Update the product
-      await productService.updateProduct(id, productData);
+      // Update the product using Redux
+      const resultAction = await dispatch(
+        updateProduct({
+          productId: id,
+          productData,
+        })
+      );
 
-      // Handle image uploads if there are new images (if using separate upload endpoint)
-      if (data.images && data.images.length > 0) {
-        // This is a simplified example - in a real app, you'd need to track which images are new
-        // and only upload those, and also handle image deletions
-        for (const imageUrl of data.images) {
-          // Check if this is a File object (new upload) or a string URL (existing image)
-          if (imageUrl instanceof File) {
-            await productService.uploadProductImage(id, imageUrl);
+      if (updateProduct.fulfilled.match(resultAction)) {
+        // Handle image uploads if there are new images (if using separate upload endpoint)
+        if (data.images && data.images.length > 0) {
+          // This is a simplified example - in a real app, you'd need to track which images are new
+          // and only upload those, and also handle image deletions
+          for (const imageItem of data.images) {
+            // Check if this is a File object (new upload) or a string URL (existing image)
+            if (isFile(imageItem)) {
+              await dispatch(
+                uploadProductImage({
+                  productId: id,
+                  imageFile: imageItem,
+                })
+              );
+            }
           }
         }
-      }
 
-      toast.success("Product updated successfully");
-      router.push("/dashboard/products");
+        toast.success("Product updated successfully");
+        router.push("/dashboard/products");
+      } else {
+        throw new Error("Failed to update product");
+      }
     } catch (error) {
       console.error("Error updating product:", error);
       toast.error("Failed to update product");
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-full">
@@ -104,11 +129,15 @@ export default function EditProduct() {
           </p>
         </div>
 
-        {product && (
+        {currentProduct && (
           <EnhancedProductForm
-            initialData={product}
+            initialData={{
+              ...currentProduct,
+              images: currentProduct.images || [],
+            }}
             onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
+            isSubmitting={loading}
+            categories={categories}
           />
         )}
       </div>

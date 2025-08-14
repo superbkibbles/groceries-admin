@@ -1,4 +1,4 @@
-import api from '@/lib/axios';
+import api from "@/lib/axios";
 
 export interface Category {
   id: string;
@@ -15,9 +15,9 @@ const categoryService = {
   /**
    * Get all categories
    */
-  getCategories: async (includeInactive = false) => {
-    const response = await api.get('/categories', {
-      params: { includeInactive }
+  getCategories: async () => {
+    const response = await api.get("/categories", {
+      // params: { includeInactive }
     });
     return response.data;
   },
@@ -33,15 +33,20 @@ const categoryService = {
   /**
    * Create new category
    */
-  createCategory: async (categoryData: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const response = await api.post('/categories', categoryData);
+  createCategory: async (
+    categoryData: Omit<Category, "id" | "createdAt" | "updatedAt">
+  ) => {
+    const response = await api.post("/categories", categoryData);
     return response.data;
   },
 
   /**
    * Update category
    */
-  updateCategory: async (categoryId: string, categoryData: Partial<Category>) => {
+  updateCategory: async (
+    categoryId: string,
+    categoryData: Partial<Category>
+  ) => {
     const response = await api.put(`/categories/${categoryId}`, categoryData);
     return response.data;
   },
@@ -59,10 +64,10 @@ const categoryService = {
    */
   getCategoryProducts: async (categoryId: string, page = 1, limit = 10) => {
     const response = await api.get(`/categories/${categoryId}/products`, {
-      params: { page, limit }
+      params: { page, limit },
     });
     return response.data;
-  }
+  },
 };
 
 export default categoryService;
