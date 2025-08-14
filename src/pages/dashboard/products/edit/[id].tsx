@@ -1,54 +1,38 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import EnhancedProductForm from '@/components/products/EnhancedProductForm';
-import { toast } from 'sonner';
-import { productService } from '@/services';
-import { Product } from '@/services/productService';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import EnhancedProductForm from "@/components/products/EnhancedProductForm";
+import { toast } from "sonner";
+import { productService } from "@/services";
+import { Product } from "@/services/productService";
 
-// Type for our product with variations
-interface ProductWithVariations extends Product {
-  options?: {
-    id: string;
-    name: string;
-    values: string[];
-  }[];
-  variants?: {
-    id: string;
-    attributes: Record<string, string>;
-    price: number;
-    stock: number;
-    sku: string;
-  }[];
-}
+// Type for our product form data - matches the backend structure
+type ProductFormData = Omit<Product, "id" | "created_at" | "updated_at">;
 
 export default function EditProduct() {
   const router = useRouter();
   const { id } = router.query;
-  const [product, setProduct] = useState<ProductWithVariations | null>(null);
+  const [product, setProduct] = useState<ProductFormData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (id && typeof id === 'string') {
+    if (id && typeof id === "string") {
       const fetchProduct = async () => {
         try {
           setIsLoading(true);
           const productData = await productService.getProductById(id);
-          
-          // Transform the product data to include options and variants if they exist
-          const productWithVariations: ProductWithVariations = {
+
+          // The product data from backend already matches our form structure
+          const formData: ProductFormData = {
             ...productData,
-            // If the API doesn't return these fields, initialize them as empty arrays
-            options: productData.options || [],
-            variants: productData.variants || []
           };
-          
-          setProduct(productWithVariations);
+
+          setProduct(formData);
         } catch (error) {
-          console.error('Error fetching product:', error);
-          toast.error('Failed to load product');
-          router.push('/dashboard/products');
+          console.error("Error fetching product:", error);
+          toast.error("Failed to load product");
+          router.push("/dashboard/products");
         } finally {
           setIsLoading(false);
         }
@@ -58,26 +42,27 @@ export default function EditProduct() {
     }
   }, [id, router]);
 
-  const handleSubmit = async (data: ProductWithVariations) => {
-    if (!id || typeof id !== 'string') return;
-    
+  const handleSubmit = async (data: ProductFormData) => {
+    if (!id || typeof id !== "string") return;
+
     setIsSubmitting(true);
     try {
-      // Prepare the data for the API
-      const productData = {
+      // The data structure now matches the backend exactly
+      const productData: Partial<Product> = {
         name: data.name,
         description: data.description,
         price: data.price,
-        categoryId: data.category, // Assuming category maps to categoryId
-        stock: data.stock,
-        sku: data.sku || '',
-        // Handle other fields as needed
+        categories: data.categories,
+        stock_quantity: data.stock_quantity,
+        sku: data.sku || "",
+        attributes: data.attributes || {},
+        images: data.images || [],
       };
-      
+
       // Update the product
       await productService.updateProduct(id, productData);
-      
-      // Handle image uploads if there are new images
+
+      // Handle image uploads if there are new images (if using separate upload endpoint)
       if (data.images && data.images.length > 0) {
         // This is a simplified example - in a real app, you'd need to track which images are new
         // and only upload those, and also handle image deletions
@@ -88,19 +73,12 @@ export default function EditProduct() {
           }
         }
       }
-      
-      // Handle variants if they exist
-      if (data.variants && data.variants.length > 0) {
-        // In a real app, you would have API endpoints to manage variants
-        // This is just a placeholder for demonstration
-        console.log('Updating variants:', data.variants);
-      }
-      
-      toast.success('Product updated successfully');
-      router.push('/dashboard/products');
+
+      toast.success("Product updated successfully");
+      router.push("/dashboard/products");
     } catch (error) {
-      console.error('Error updating product:', error);
-      toast.error('Failed to update product');
+      console.error("Error updating product:", error);
+      toast.error("Failed to update product");
     } finally {
       setIsSubmitting(false);
     }
@@ -127,10 +105,10 @@ export default function EditProduct() {
         </div>
 
         {product && (
-          <EnhancedProductForm 
-            initialData={product} 
-            onSubmit={handleSubmit} 
-            isSubmitting={isSubmitting} 
+          <EnhancedProductForm
+            initialData={product}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
           />
         )}
       </div>

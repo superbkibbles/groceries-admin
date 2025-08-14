@@ -1,15 +1,26 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import ImageUpload from './ImageUpload';
-import ProductVariations, { VariationOption, ProductVariant } from './ProductVariations';
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import ImageUpload from "./ImageUpload";
 
 interface EnhancedProductFormProps {
   initialData?: {
@@ -17,36 +28,34 @@ interface EnhancedProductFormProps {
     name: string;
     description: string;
     price: number;
-    category: string;
-    stock: number;
+    categories: string[]; // Array of category IDs
+    stock_quantity: number; // Renamed to match backend
     images: string[];
     sku?: string;
-    options?: VariationOption[];
-    variants?: ProductVariant[];
+    attributes?: Record<string, string | number | boolean>; // Generic attributes for variations
   };
-  onSubmit: (data: any) => void;
+  onSubmit: (data: EnhancedProductFormProps["initialData"]) => void;
   isSubmitting?: boolean;
 }
 
 const categories = [
-  { id: 'electronics', name: 'Electronics' },
-  { id: 'clothing', name: 'Clothing' },
-  { id: 'home', name: 'Home' },
-  { id: 'books', name: 'Books' },
-  { id: 'accessories', name: 'Accessories' },
+  { id: "electronics", name: "Electronics" },
+  { id: "clothing", name: "Clothing" },
+  { id: "home", name: "Home" },
+  { id: "books", name: "Books" },
+  { id: "accessories", name: "Accessories" },
 ];
 
 const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   initialData = {
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     price: 0,
-    category: '',
-    stock: 0,
+    categories: [],
+    stock_quantity: 0,
     images: [],
-    sku: '',
-    options: [],
-    variants: [],
+    sku: "",
+    attributes: {},
   },
   onSubmit,
   isSubmitting = false,
@@ -54,13 +63,18 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   const router = useRouter();
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState("basic");
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'price' || name === 'stock' ? parseFloat(value) || 0 : value,
+      [name]:
+        name === "price" || name === "stock_quantity"
+          ? parseFloat(value) || 0
+          : value,
     }));
 
     // Clear error when field is edited
@@ -73,17 +87,17 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     }
   };
 
-  const handleSelectChange = (value: string) => {
+  const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      category: value,
+      categories: [value], // For now, single category selection
     }));
 
     // Clear category error
-    if (errors.category) {
+    if (errors.categories) {
       setErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors.category;
+        delete newErrors.categories;
         return newErrors;
       });
     }
@@ -94,7 +108,7 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
       ...prev,
       images,
     }));
-    
+
     // Clear any image-related errors
     if (errors.images) {
       setErrors((prev) => {
@@ -105,11 +119,16 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     }
   };
 
-  const handleVariationsChange = (options: VariationOption[], variants: ProductVariant[]) => {
+  const handleAttributeChange = (
+    key: string,
+    value: string | number | boolean
+  ) => {
     setFormData((prev) => ({
       ...prev,
-      options,
-      variants,
+      attributes: {
+        ...prev.attributes,
+        [key]: value,
+      },
     }));
   };
 
@@ -117,36 +136,28 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Product name is required';
+      newErrors.name = "Product name is required";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Product description is required';
+      newErrors.description = "Product description is required";
     }
 
     if (formData.price <= 0) {
-      newErrors.price = 'Price must be greater than 0';
+      newErrors.price = "Price must be greater than 0";
     }
 
-    if (!formData.category) {
-      newErrors.category = 'Category is required';
+    if (!formData.categories || formData.categories.length === 0) {
+      newErrors.categories = "At least one category is required";
     }
 
-    if (formData.stock < 0) {
-      newErrors.stock = 'Stock cannot be negative';
+    if (formData.stock_quantity < 0) {
+      newErrors.stock_quantity = "Stock cannot be negative";
     }
-    
-    // If we have variants, make sure they have prices
-    if (formData.variants && formData.variants.length > 0) {
-      const invalidVariants = formData.variants.filter(v => v.price <= 0);
-      if (invalidVariants.length > 0) {
-        newErrors.variants = 'All variants must have a price greater than 0';
-      }
-    }
-    
+
     // Validate at least one image is uploaded for the product
     if (formData.images.length === 0) {
-      newErrors.images = 'At least one product image is required';
+      newErrors.images = "At least one product image is required";
     }
 
     setErrors(newErrors);
@@ -159,16 +170,14 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     if (validateForm()) {
       onSubmit(formData);
     } else {
-      toast.error('Please fix the errors in the form');
+      toast.error("Please fix the errors in the form");
       // Switch to the tab with errors
-      if (errors.name || errors.description || errors.category) {
-        setActiveTab('basic');
-      } else if (errors.price || errors.stock) {
-        setActiveTab('pricing');
+      if (errors.name || errors.description || errors.categories) {
+        setActiveTab("basic");
+      } else if (errors.price || errors.stock_quantity) {
+        setActiveTab("pricing");
       } else if (errors.images) {
-        setActiveTab('images');
-      } else if (errors.variants) {
-        setActiveTab('variations');
+        setActiveTab("images");
       }
     }
   };
@@ -177,14 +186,19 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>{initialData.id ? 'Edit Product' : 'Add New Product'}</CardTitle>
+          <CardTitle>
+            {initialData.id ? "Edit Product" : "Add New Product"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-8">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
-              <TabsTrigger value="variations">Variations</TabsTrigger>
               <TabsTrigger value="pricing">Pricing & Inventory</TabsTrigger>
             </TabsList>
 
@@ -201,7 +215,9 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   placeholder="Enter product name"
                   aria-invalid={!!errors.name}
                 />
-                {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -218,7 +234,9 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   aria-invalid={!!errors.description}
                 />
                 {errors.description && (
-                  <p className="text-sm text-destructive">{errors.description}</p>
+                  <p className="text-sm text-destructive">
+                    {errors.description}
+                  </p>
                 )}
               </div>
 
@@ -226,8 +244,14 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <Label htmlFor="category">
                   Category <span className="text-destructive">*</span>
                 </Label>
-                <Select value={formData.category} onValueChange={handleSelectChange}>
-                  <SelectTrigger id="category" aria-invalid={!!errors.category}>
+                <Select
+                  value={formData.categories[0] || ""}
+                  onValueChange={handleCategoryChange}
+                >
+                  <SelectTrigger
+                    id="category"
+                    aria-invalid={!!errors.categories}
+                  >
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -238,8 +262,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.category && (
-                  <p className="text-sm text-destructive">{errors.category}</p>
+                {errors.categories && (
+                  <p className="text-sm text-destructive">
+                    {errors.categories}
+                  </p>
                 )}
               </div>
 
@@ -253,88 +279,119 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   placeholder="Enter product SKU"
                 />
               </div>
+
+              <div className="space-y-4">
+                <Label>Product Attributes (Optional)</Label>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="attributeType">Attribute Type</Label>
+                    <Input
+                      id="attributeType"
+                      placeholder="e.g., Size, Color, Weight"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value && formData.attributes?.attributeValue) {
+                          handleAttributeChange(
+                            value,
+                            formData.attributes.attributeValue
+                          );
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="attributeValue">Attribute Value</Label>
+                    <Input
+                      id="attributeValue"
+                      placeholder="e.g., Large, Red, 500g"
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const typeElement = document.getElementById(
+                          "attributeType"
+                        ) as HTMLInputElement;
+                        const type = typeElement?.value;
+                        if (type && value) {
+                          handleAttributeChange(type, value);
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Add custom attributes to describe product variations or
+                  properties.
+                </p>
+              </div>
             </TabsContent>
 
             <TabsContent value="images" className="space-y-4">
-              <ImageUpload 
-                images={formData.images} 
-                onChange={handleImagesChange} 
+              <ImageUpload
+                images={formData.images}
+                onChange={handleImagesChange}
               />
               {errors.images && (
                 <p className="text-sm text-destructive mt-2">{errors.images}</p>
               )}
             </TabsContent>
 
-            <TabsContent value="variations" className="space-y-4">
-              <ProductVariations
-                options={formData.options || []}
-                variants={formData.variants || []}
-                onChange={handleVariationsChange}
-              />
-              {errors.variants && (
-                <p className="text-sm text-destructive mt-2">{errors.variants}</p>
-              )}
-            </TabsContent>
-
             <TabsContent value="pricing" className="space-y-4">
-              {formData.variants && formData.variants.length > 0 ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    This product has variations. Please set prices and inventory in the Variations tab.
-                  </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="price">
+                    Price ($) <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.price}
+                    onChange={handleChange}
+                    placeholder="0.00"
+                    aria-invalid={!!errors.price}
+                  />
+                  {errors.price && (
+                    <p className="text-sm text-destructive">{errors.price}</p>
+                  )}
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">
-                      Price ($) <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="price"
-                      name="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.price}
-                      onChange={handleChange}
-                      placeholder="0.00"
-                      aria-invalid={!!errors.price}
-                    />
-                    {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="stock">
-                      Stock <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="stock"
-                      name="stock"
-                      type="number"
-                      min="0"
-                      step="1"
-                      value={formData.stock}
-                      onChange={handleChange}
-                      placeholder="0"
-                      aria-invalid={!!errors.stock}
-                    />
-                    {errors.stock && <p className="text-sm text-destructive">{errors.stock}</p>}
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="stock_quantity">
+                    Stock Quantity <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="stock_quantity"
+                    name="stock_quantity"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.stock_quantity}
+                    onChange={handleChange}
+                    placeholder="0"
+                    aria-invalid={!!errors.stock_quantity}
+                  />
+                  {errors.stock_quantity && (
+                    <p className="text-sm text-destructive">
+                      {errors.stock_quantity}
+                    </p>
+                  )}
                 </div>
-              )}
+              </div>
             </TabsContent>
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : initialData.id ? 'Update Product' : 'Create Product'}
+            {isSubmitting
+              ? "Saving..."
+              : initialData.id
+              ? "Update Product"
+              : "Create Product"}
           </Button>
         </CardFooter>
       </Card>

@@ -1,12 +1,24 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useRouter } from "next/router";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { toast } from "sonner";
 
 interface ProductFormProps {
   initialData?: {
@@ -14,30 +26,34 @@ interface ProductFormProps {
     name: string;
     description: string;
     price: number;
-    category: string;
-    stock: number;
+    categories: string[];
+    stock_quantity: number;
     images?: string[];
+    sku?: string;
+    attributes?: Record<string, string | number | boolean>;
   };
-  onSubmit: (data: any) => void;
+  onSubmit: (data: ProductFormProps["initialData"]) => void;
   isSubmitting?: boolean;
 }
 
 const categories = [
-  { id: 'electronics', name: 'Electronics' },
-  { id: 'clothing', name: 'Clothing' },
-  { id: 'home', name: 'Home' },
-  { id: 'books', name: 'Books' },
-  { id: 'accessories', name: 'Accessories' },
+  { id: "electronics", name: "Electronics" },
+  { id: "clothing", name: "Clothing" },
+  { id: "home", name: "Home" },
+  { id: "books", name: "Books" },
+  { id: "accessories", name: "Accessories" },
 ];
 
 const ProductForm: React.FC<ProductFormProps> = ({
   initialData = {
-    name: '',
-    description: '',
+    name: "",
+    description: "",
     price: 0,
-    category: '',
-    stock: 0,
+    categories: [],
+    stock_quantity: 0,
     images: [],
+    sku: "",
+    attributes: {},
   },
   onSubmit,
   isSubmitting = false,
@@ -46,11 +62,16 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'price' || name === 'stock' ? parseFloat(value) || 0 : value,
+      [name]:
+        name === "price" || name === "stock_quantity"
+          ? parseFloat(value) || 0
+          : value,
     }));
 
     // Clear error when field is edited
@@ -63,17 +84,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
     }
   };
 
-  const handleSelectChange = (value: string) => {
+  const handleCategoryChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      category: value,
+      categories: [value],
     }));
 
     // Clear category error
-    if (errors.category) {
+    if (errors.categories) {
       setErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors.category;
+        delete newErrors.categories;
         return newErrors;
       });
     }
@@ -83,23 +104,23 @@ const ProductForm: React.FC<ProductFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Product name is required';
+      newErrors.name = "Product name is required";
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Product description is required';
+      newErrors.description = "Product description is required";
     }
 
     if (formData.price <= 0) {
-      newErrors.price = 'Price must be greater than 0';
+      newErrors.price = "Price must be greater than 0";
     }
 
-    if (!formData.category) {
-      newErrors.category = 'Category is required';
+    if (!formData.categories || formData.categories.length === 0) {
+      newErrors.categories = "At least one category is required";
     }
 
-    if (formData.stock < 0) {
-      newErrors.stock = 'Stock cannot be negative';
+    if (formData.stock_quantity < 0) {
+      newErrors.stock_quantity = "Stock cannot be negative";
     }
 
     setErrors(newErrors);
@@ -112,7 +133,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     if (validateForm()) {
       onSubmit(formData);
     } else {
-      toast.error('Please fix the errors in the form');
+      toast.error("Please fix the errors in the form");
     }
   };
 
@@ -120,7 +141,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
     <form onSubmit={handleSubmit}>
       <Card>
         <CardHeader>
-          <CardTitle>{initialData.id ? 'Edit Product' : 'Add New Product'}</CardTitle>
+          <CardTitle>
+            {initialData.id ? "Edit Product" : "Add New Product"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -135,7 +158,9 @@ const ProductForm: React.FC<ProductFormProps> = ({
               placeholder="Enter product name"
               aria-invalid={!!errors.name}
             />
-            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+            {errors.name && (
+              <p className="text-sm text-destructive">{errors.name}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -172,25 +197,31 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 placeholder="0.00"
                 aria-invalid={!!errors.price}
               />
-              {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
+              {errors.price && (
+                <p className="text-sm text-destructive">{errors.price}</p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stock">
-                Stock <span className="text-destructive">*</span>
+              <Label htmlFor="stock_quantity">
+                Stock Quantity <span className="text-destructive">*</span>
               </Label>
               <Input
-                id="stock"
-                name="stock"
+                id="stock_quantity"
+                name="stock_quantity"
                 type="number"
                 min="0"
                 step="1"
-                value={formData.stock}
+                value={formData.stock_quantity}
                 onChange={handleChange}
                 placeholder="0"
-                aria-invalid={!!errors.stock}
+                aria-invalid={!!errors.stock_quantity}
               />
-              {errors.stock && <p className="text-sm text-destructive">{errors.stock}</p>}
+              {errors.stock_quantity && (
+                <p className="text-sm text-destructive">
+                  {errors.stock_quantity}
+                </p>
+              )}
             </div>
           </div>
 
@@ -199,13 +230,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
               Category <span className="text-destructive">*</span>
             </Label>
             <Select
-              value={formData.category}
-              onValueChange={handleSelectChange}
+              value={formData.categories[0] || ""}
+              onValueChange={handleCategoryChange}
             >
-              <SelectTrigger
-                id="category"
-                aria-invalid={!!errors.category}
-              >
+              <SelectTrigger id="category" aria-invalid={!!errors.categories}>
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
@@ -216,29 +244,42 @@ const ProductForm: React.FC<ProductFormProps> = ({
                 ))}
               </SelectContent>
             </Select>
-            {errors.category && (
-              <p className="text-sm text-destructive">{errors.category}</p>
+            {errors.categories && (
+              <p className="text-sm text-destructive">{errors.categories}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
+            <Input
+              id="sku"
+              name="sku"
+              value={formData.sku}
+              onChange={handleChange}
+              placeholder="Enter product SKU"
+            />
           </div>
 
           {/* Image upload functionality would go here */}
           <div className="space-y-2">
             <Label>Product Images</Label>
             <div className="border border-dashed border-border rounded-md p-6 text-center">
-              <p className="text-muted-foreground">Image upload functionality coming soon</p>
+              <p className="text-muted-foreground">
+                Image upload functionality coming soon
+              </p>
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
+          <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : initialData.id ? 'Update Product' : 'Create Product'}
+            {isSubmitting
+              ? "Saving..."
+              : initialData.id
+              ? "Update Product"
+              : "Create Product"}
           </Button>
         </CardFooter>
       </Card>

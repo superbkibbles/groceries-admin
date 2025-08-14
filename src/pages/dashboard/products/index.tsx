@@ -1,70 +1,97 @@
-import { useState } from 'react';
-import { useRouter } from 'next/router';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Search, MoreHorizontal, Edit, Trash, Eye } from 'lucide-react';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useRouter } from "next/router";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Search, MoreHorizontal, Edit, Trash, Eye } from "lucide-react";
+import { toast } from "sonner";
 
 // Mock product data
 const mockProducts = [
   {
-    id: '1',
-    name: 'Wireless Headphones',
+    id: "1",
+    name: "Wireless Headphones",
     price: 99.99,
-    category: 'Electronics',
+    category: "Electronics",
     stock: 45,
-    status: 'In Stock',
+    status: "In Stock",
   },
   {
-    id: '2',
-    name: 'Cotton T-Shirt',
+    id: "2",
+    name: "Cotton T-Shirt",
     price: 24.99,
-    category: 'Clothing',
+    category: "Clothing",
     stock: 120,
-    status: 'In Stock',
+    status: "In Stock",
   },
   {
-    id: '3',
-    name: 'Smart Watch',
+    id: "3",
+    name: "Smart Watch",
     price: 199.99,
-    category: 'Electronics',
+    category: "Electronics",
     stock: 18,
-    status: 'Low Stock',
+    status: "Low Stock",
   },
   {
-    id: '4',
-    name: 'Desk Lamp',
+    id: "4",
+    name: "Desk Lamp",
     price: 34.99,
-    category: 'Home',
+    category: "Home",
     stock: 0,
-    status: 'Out of Stock',
+    status: "Out of Stock",
   },
   {
-    id: '5',
-    name: 'Leather Wallet',
+    id: "5",
+    name: "Leather Wallet",
     price: 49.99,
-    category: 'Accessories',
+    category: "Accessories",
     stock: 65,
-    status: 'In Stock',
+    status: "In Stock",
   },
 ];
 
 export default function Products() {
   const router = useRouter();
   const [products, setProducts] = useState(mockProducts);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   // Filter products based on search query
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +99,7 @@ export default function Products() {
   };
 
   const handleAddProduct = () => {
-    router.push('/dashboard/products/add');
+    router.push("/dashboard/products/add");
   };
 
   const handleEditProduct = (id: string) => {
@@ -92,7 +119,7 @@ export default function Products() {
     if (productToDelete) {
       // In a real app, you would call an API to delete the product
       setProducts(products.filter((product) => product.id !== productToDelete));
-      toast.success('Product deleted successfully');
+      toast.success("Product deleted successfully");
       setIsDeleteDialogOpen(false);
       setProductToDelete(null);
     }
@@ -104,7 +131,8 @@ export default function Products() {
         <div className="flex flex-col space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Products</h1>
           <p className="text-muted-foreground">
-            Manage your product inventory, add new products, or update existing ones.
+            Manage your product inventory, add new products, or update existing
+            ones.
           </p>
         </div>
 
@@ -116,7 +144,9 @@ export default function Products() {
                 <Plus className="mr-2 h-4 w-4" /> Add Product
               </Button>
             </div>
-            <CardDescription>A list of all products in your store.</CardDescription>
+            <CardDescription>
+              A list of all products in your store.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center py-4">
@@ -138,7 +168,7 @@ export default function Products() {
                     <TableHead>Name</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead>Category</TableHead>
-                    <TableHead>Stock</TableHead>
+                    <TableHead>Stock Quantity</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -153,18 +183,20 @@ export default function Products() {
                   ) : (
                     filteredProducts.map((product) => (
                       <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {product.name}
+                        </TableCell>
                         <TableCell>${product.price.toFixed(2)}</TableCell>
                         <TableCell>{product.category}</TableCell>
                         <TableCell>{product.stock}</TableCell>
                         <TableCell>
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              product.status === 'In Stock'
-                                ? 'bg-green-100 text-green-800'
-                                : product.status === 'Low Stock'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-red-100 text-red-800'
+                              product.status === "In Stock"
+                                ? "bg-green-100 text-green-800"
+                                : product.status === "Low Stock"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : "bg-red-100 text-red-800"
                             }`}
                           >
                             {product.status}
@@ -179,15 +211,21 @@ export default function Products() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewProduct(product.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleViewProduct(product.id)}
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 View details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditProduct(product.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleEditProduct(product.id)}
+                              >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => confirmDelete(product.id)}>
+                              <DropdownMenuItem
+                                onClick={() => confirmDelete(product.id)}
+                              >
                                 <Trash className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
@@ -208,13 +246,19 @@ export default function Products() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure you want to delete this product?</DialogTitle>
+            <DialogTitle>
+              Are you sure you want to delete this product?
+            </DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the product from your store.
+              This action cannot be undone. This will permanently delete the
+              product from your store.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDeleteProduct}>
