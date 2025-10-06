@@ -47,7 +47,7 @@ export const fetchProductById = createAsyncThunk(
   "products/fetchProductById",
   async (productId: string) => {
     const response = await productService.getProductById(productId);
-    return response;
+    return response.data;
   }
 );
 
@@ -146,7 +146,7 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        state.products = action.payload.data || action.payload;
+        state.products = action.payload.data || [];
         if (action.payload.total !== undefined) {
           state.pagination.total = action.payload.total;
           state.pagination.totalPages = action.payload.totalPages || 0;
@@ -163,10 +163,13 @@ const productSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchProductById.fulfilled, (state, action) => {
-        state.loading = false;
-        state.currentProduct = action.payload;
-      })
+      .addCase(
+        fetchProductById.fulfilled,
+        (state, { payload }: PayloadAction<Product>) => {
+          state.loading = false;
+          state.currentProduct = payload ?? null;
+        }
+      )
       .addCase(fetchProductById.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Failed to fetch product";

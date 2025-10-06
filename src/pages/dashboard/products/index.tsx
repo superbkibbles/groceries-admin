@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
@@ -62,13 +62,17 @@ export default function Products() {
   }, [error]);
 
   // Filter products based on search query
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (product.categories &&
-        product.categories.some((cat) =>
-          cat.toLowerCase().includes(searchQuery.toLowerCase())
-        ))
+  const filteredProducts = useMemo(
+    () =>
+      products?.filter(
+        (product) =>
+          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (product.categories &&
+            product.categories.some((cat) =>
+              cat.toLowerCase().includes(searchQuery.toLowerCase())
+            ))
+      ),
+    [products, searchQuery]
   );
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -155,14 +159,14 @@ export default function Products() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredProducts.length === 0 ? (
+                  {filteredProducts?.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center">
                         No products found.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredProducts.map((product) => {
+                    filteredProducts?.map((product) => {
                       // Determine status based on stock quantity
                       const getProductStatus = (stockQuantity: number) => {
                         if (stockQuantity === 0)

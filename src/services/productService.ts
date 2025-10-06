@@ -5,7 +5,13 @@ export interface Translation {
   description: string;
 }
 
+export interface Product_RESPONSE {
+  data: Product;
+  message: string;
+}
+
 export interface Product {
+  data: never[];
   id: string;
   name: string;
   description: string;
@@ -43,7 +49,7 @@ const productService = {
   /**
    * Get product by ID
    */
-  getProductById: async (productId: string): Promise<Product> => {
+  getProductById: async (productId: string): Promise<Product_RESPONSE> => {
     const response = await api.get(`/products/${productId}`);
     return response.data;
   },

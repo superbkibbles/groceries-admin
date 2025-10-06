@@ -25,6 +25,8 @@ import { TranslationForm } from "./TranslationForm";
 import { Category } from "@/services/categoryService";
 import { Translation } from "@/services/productService";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 
 interface EnhancedProductFormProps {
   initialData?: {
@@ -44,6 +46,19 @@ interface EnhancedProductFormProps {
   categories?: Category[]; // Categories from Redux
 }
 
+type FormValues = {
+  id?: string;
+  name: string;
+  description: string;
+  price: number;
+  categories: string[];
+  stock_quantity: number;
+  images: string[];
+  sku?: string;
+  attributes?: Record<string, string | number | boolean>;
+  translations?: Record<string, Translation>;
+};
+
 const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   initialData = {
     name: "",
@@ -60,167 +75,125 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   categories: availableCategories = [],
 }) => {
   const router = useRouter();
-  const [formData, setFormData] = useState(initialData);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // Legacy local state removed; using Formik
   const [activeTab, setActiveTab] = useState("basic");
-  const [translations, setTranslations] = useState<Record<string, Translation>>(
-    () => {
-      const initialTranslations = initialData.translations || {};
-      // Auto-populate English translation from basic info if not already set
-      if (!initialTranslations.en && (formData.name || formData.description)) {
-        initialTranslations.en = {
-          name: formData.name,
-          description: formData.description,
-        };
-      }
-      return initialTranslations;
-    }
-  );
+  // Translations are managed via Formik; no separate local state
   const { t } = useTranslation();
 
-  const handleChange = (
+  const validationSchema = Yup.object({
+    name: Yup.string().trim().required(t("products.name_required")),
+    description: Yup.string()
+      .trim()
+      .required(t("products.description_required")),
+    price: Yup.number()
+      .typeError(t("products.price_required"))
+      .moreThan(0, t("products.price_required")),
+    categories: Yup.array()
+      .of(Yup.string().required())
+      .min(1, t("products.category_required")),
+    stock_quantity: Yup.number()
+      .typeError(t("products.stock_required"))
+      .min(0, t("products.stock_required")),
+    images: Yup.array().of(Yup.string()).min(1, t("products.image_required")),
+    sku: Yup.string().nullable(),
+    attributes: Yup.object().nullable(),
+    translations: Yup.mixed().nullable(),
+  });
+
+  const formik = useFormik<FormValues>({
+    initialValues: {
+      id: initialData.id,
+      name: initialData.name,
+      description: initialData.description,
+      price: initialData.price,
+      categories: initialData.categories,
+      stock_quantity: initialData.stock_quantity,
+      images: initialData.images || [],
+      sku: initialData.sku,
+      attributes: initialData.attributes || {},
+      translations: initialData.translations || {},
+    },
+    enableReinitialize: true,
+    validationSchema,
+    onSubmit: (values) => {
+      const valuesWithEn = {
+        ...values,
+        translations: {
+          ...(values?.translations || {}),
+          ...(values?.name || values?.description
+            ? {
+                en: {
+                  name: values.name,
+                  description: values.description,
+                },
+              }
+            : {}),
+        },
+      };
+      onSubmit(valuesWithEn);
+    },
+  });
+
+  // No local sync needed; Formik enableReinitialize handles re-population
+
+  const handleBasicChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === "price" || name === "stock_quantity"
-          ? parseFloat(value) || 0
-          : value,
-    }));
-
-    // Update English translation when basic info changes
-    if (name === "name" || name === "description") {
-      setTranslations((prev) => ({
-        ...prev,
-        en: {
-          ...prev.en,
-          [name]: value,
-        },
-      }));
-    }
-
-    // Clear error when field is edited
-    if (errors[name]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
-      });
-    }
+    const parsed =
+      name === "price" || name === "stock_quantity"
+        ? parseFloat(value) || 0
+        : value;
+    formik.setFieldValue(
+      name as keyof NonNullable<typeof formik.initialValues>,
+      parsed
+    );
+    formik.setFieldTouched(
+      name as keyof NonNullable<typeof formik.initialValues>,
+      true,
+      false
+    );
   };
 
   const handleCategoryChange = (value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      categories: [value], // For now, single category selection
-    }));
-
-    // Clear category error
-    if (errors.categories) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.categories;
-        return newErrors;
-      });
-    }
+    formik.setFieldValue("categories", [value]);
+    formik.setFieldTouched("categories", true, false);
   };
 
   const handleImagesChange = (images: string[]) => {
-    setFormData((prev) => ({
-      ...prev,
-      images,
-    }));
-
-    // Clear any image-related errors
-    if (errors.images) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.images;
-        return newErrors;
-      });
-    }
+    formik.setFieldValue("images", images);
+    formik.setFieldTouched("images", true, false);
   };
 
   const handleAttributeChange = (
     key: string,
     value: string | number | boolean
   ) => {
-    setFormData((prev) => ({
-      ...prev,
-      attributes: {
-        ...prev.attributes,
-        [key]: value,
-      },
-    }));
+    const next = { ...(formik.values?.attributes || {}) } as Record<
+      string,
+      string | number | boolean
+    >;
+    next[key] = value;
+    formik.setFieldValue("attributes", next);
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  // Validation handled by Yup schema
 
-    if (!formData.name.trim()) {
-      newErrors.name = t("products.name_required");
-    }
-
-    if (!formData.description.trim()) {
-      newErrors.description = t("products.description_required");
-    }
-
-    if (formData.price <= 0) {
-      newErrors.price = t("products.price_required");
-    }
-
-    if (!formData.categories || formData.categories.length === 0) {
-      newErrors.categories = t("products.category_required");
-    }
-
-    if (formData.stock_quantity < 0) {
-      newErrors.stock_quantity = t("products.stock_required");
-    }
-
-    // Validate at least one image is uploaded for the product
-    if (formData.images.length === 0) {
-      newErrors.images = t("products.image_required");
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleTranslationChange = (
-    language: string,
-    field: keyof Translation,
-    value: string
-  ) => {
-    setTranslations((prev) => ({
-      ...prev,
-      [language]: {
-        ...prev[language],
-        [field]: value,
-      },
-    }));
-  };
+  // Translations handled via setFieldValue in TranslationForm handler
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (validateForm()) {
-      const dataWithTranslations = {
-        ...formData,
-        translations,
-      };
-      onSubmit(dataWithTranslations);
-    } else {
+    formik.handleSubmit();
+    const fErrors = formik.errors as Record<string, unknown>;
+    if (fErrors.name || fErrors.description || fErrors.categories) {
+      setActiveTab("basic");
+    } else if (fErrors.price || fErrors.stock_quantity) {
+      setActiveTab("pricing");
+    } else if (fErrors.images) {
+      setActiveTab("images");
+    }
+    if (Object.keys(fErrors).length) {
       toast.error("Please fix the errors in the form");
-      // Switch to the tab with errors
-      if (errors.name || errors.description || errors.categories) {
-        setActiveTab("basic");
-      } else if (errors.price || errors.stock_quantity) {
-        setActiveTab("pricing");
-      } else if (errors.images) {
-        setActiveTab("images");
-      }
     }
   };
 
@@ -260,13 +233,16 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <Input
                   id="name"
                   name="name"
-                  value={formData.name}
-                  onChange={handleChange}
+                  value={formik.values?.name || ""}
+                  onChange={handleBasicChange}
+                  onBlur={formik.handleBlur}
                   placeholder={t("products.enter_name")}
-                  aria-invalid={!!errors.name}
+                  aria-invalid={!!(formik.touched.name && formik.errors.name)}
                 />
-                {errors.name && (
-                  <p className="text-sm text-destructive">{errors.name}</p>
+                {formik.touched.name && formik.errors.name && (
+                  <p className="text-sm text-destructive">
+                    {formik.errors.name as string}
+                  </p>
                 )}
               </div>
 
@@ -278,15 +254,18 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <Textarea
                   id="description"
                   name="description"
-                  value={formData.description}
-                  onChange={handleChange}
+                  value={formik.values?.description || ""}
+                  onChange={handleBasicChange}
+                  onBlur={formik.handleBlur}
                   placeholder={t("products.enter_description")}
                   rows={6}
-                  aria-invalid={!!errors.description}
+                  aria-invalid={
+                    !!(formik.touched.description && formik.errors.description)
+                  }
                 />
-                {errors.description && (
+                {formik.touched.description && formik.errors.description && (
                   <p className="text-sm text-destructive">
-                    {errors.description}
+                    {formik.errors.description as string}
                   </p>
                 )}
               </div>
@@ -296,12 +275,20 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   Category <span className="text-destructive">*</span>
                 </Label>
                 <Select
-                  value={formData.categories[0] || ""}
-                  onValueChange={handleCategoryChange}
+                  value={
+                    (formik.values?.categories &&
+                      formik.values.categories[0]) ||
+                    ""
+                  }
+                  onValueChange={(val) => {
+                    handleCategoryChange(val);
+                  }}
                 >
                   <SelectTrigger
                     id="category"
-                    aria-invalid={!!errors.categories}
+                    aria-invalid={
+                      !!(formik.touched.categories && formik.errors.categories)
+                    }
                   >
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -313,9 +300,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.categories && (
+                {formik.touched.categories && formik.errors.categories && (
                   <p className="text-sm text-destructive">
-                    {errors.categories}
+                    {(formik.errors.categories as unknown as string) ||
+                      t("products.category_required")}
                   </p>
                 )}
               </div>
@@ -325,8 +313,9 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                 <Input
                   id="sku"
                   name="sku"
-                  value={formData.sku}
-                  onChange={handleChange}
+                  value={formik.values?.sku || ""}
+                  onChange={handleBasicChange}
+                  onBlur={formik.handleBlur}
                   placeholder="Enter product SKU"
                 />
               </div>
@@ -341,11 +330,13 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                       placeholder="e.g., Size, Color, Weight"
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (value && formData.attributes?.attributeValue) {
-                          handleAttributeChange(
-                            value,
-                            formData.attributes.attributeValue
-                          );
+                        const attrVal = (
+                          formik.values?.attributes as
+                            | Record<string, unknown>
+                            | undefined
+                        )?.attributeValue as string | undefined;
+                        if (value && attrVal) {
+                          handleAttributeChange(value, attrVal);
                         }
                       }}
                     />
@@ -378,22 +369,41 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
             <TabsContent value="translations" className="space-y-4">
               <TranslationForm
-                initialTranslations={translations}
-                onTranslationChange={handleTranslationChange}
+                initialTranslations={
+                  (formik.values?.translations || {}) as Record<
+                    string,
+                    Translation
+                  >
+                }
+                onTranslationChange={(language, field, value) => {
+                  const next = {
+                    ...(formik.values?.translations || {}),
+                    [language]: {
+                      ...((formik.values?.translations || {})[language] || {}),
+                      [field]: value,
+                    },
+                  } as Record<string, Translation>;
+                  formik.setFieldValue("translations", next);
+                }}
                 basicProductInfo={{
-                  name: formData.name,
-                  description: formData.description,
+                  name: formik.values?.name || "",
+                  description: formik.values?.description || "",
                 }}
               />
             </TabsContent>
 
             <TabsContent value="images" className="space-y-4">
               <ImageUpload
-                images={formData.images}
-                onChange={handleImagesChange}
+                images={formik.values?.images || []}
+                onChange={(imgs) => {
+                  handleImagesChange(imgs);
+                }}
               />
-              {errors.images && (
-                <p className="text-sm text-destructive mt-2">{errors.images}</p>
+              {formik.touched.images && formik.errors.images && (
+                <p className="text-sm text-destructive mt-2">
+                  {(formik.errors.images as unknown as string) ||
+                    t("products.image_required")}
+                </p>
               )}
             </TabsContent>
 
@@ -409,13 +419,18 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.price}
-                    onChange={handleChange}
+                    value={formik.values?.price ?? 0}
+                    onChange={handleBasicChange}
+                    onBlur={formik.handleBlur}
                     placeholder="0.00"
-                    aria-invalid={!!errors.price}
+                    aria-invalid={
+                      !!(formik.touched.price && formik.errors.price)
+                    }
                   />
-                  {errors.price && (
-                    <p className="text-sm text-destructive">{errors.price}</p>
+                  {formik.touched.price && formik.errors.price && (
+                    <p className="text-sm text-destructive">
+                      {formik.errors.price as string}
+                    </p>
                   )}
                 </div>
 
@@ -429,16 +444,23 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                     type="number"
                     min="0"
                     step="1"
-                    value={formData.stock_quantity}
-                    onChange={handleChange}
+                    value={formik.values?.stock_quantity ?? 0}
+                    onChange={handleBasicChange}
+                    onBlur={formik.handleBlur}
                     placeholder="0"
-                    aria-invalid={!!errors.stock_quantity}
+                    aria-invalid={
+                      !!(
+                        formik.touched.stock_quantity &&
+                        formik.errors.stock_quantity
+                      )
+                    }
                   />
-                  {errors.stock_quantity && (
-                    <p className="text-sm text-destructive">
-                      {errors.stock_quantity}
-                    </p>
-                  )}
+                  {formik.touched.stock_quantity &&
+                    formik.errors.stock_quantity && (
+                      <p className="text-sm text-destructive">
+                        {formik.errors.stock_quantity as string}
+                      </p>
+                    )}
                 </div>
               </div>
             </TabsContent>
@@ -448,10 +470,10 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
           <Button type="button" variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting
+          <Button type="submit" disabled={isSubmitting || formik.isSubmitting}>
+            {isSubmitting || formik.isSubmitting
               ? "Saving..."
-              : initialData.id
+              : formik.values?.id
               ? "Update Product"
               : "Create Product"}
           </Button>

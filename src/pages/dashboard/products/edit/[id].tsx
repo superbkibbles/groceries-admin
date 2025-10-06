@@ -26,7 +26,7 @@ export default function EditProduct() {
     (state: RootState) => state.products
   );
   const { categories } = useSelector((state: RootState) => state.categories);
-
+  console.log("currentProduct", currentProduct);
   useEffect(() => {
     // Load categories
     dispatch(fetchCategories());
