@@ -21,7 +21,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import ImageUpload from "./ImageUpload";
+import { TranslationForm } from "./TranslationForm";
 import { Category } from "@/services/categoryService";
+import { Translation } from "@/services/productService";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface EnhancedProductFormProps {
   initialData?: {
@@ -34,6 +37,7 @@ interface EnhancedProductFormProps {
     images: string[];
     sku?: string;
     attributes?: Record<string, string | number | boolean>; // Generic attributes for variations
+    translations?: Record<string, Translation>; // Embedded translations
   };
   onSubmit: (data: EnhancedProductFormProps["initialData"]) => void;
   isSubmitting?: boolean;
@@ -59,6 +63,20 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState("basic");
+  const [translations, setTranslations] = useState<Record<string, Translation>>(
+    () => {
+      const initialTranslations = initialData.translations || {};
+      // Auto-populate English translation from basic info if not already set
+      if (!initialTranslations.en && (formData.name || formData.description)) {
+        initialTranslations.en = {
+          name: formData.name,
+          description: formData.description,
+        };
+      }
+      return initialTranslations;
+    }
+  );
+  const { t } = useTranslation();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -71,6 +89,17 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
           ? parseFloat(value) || 0
           : value,
     }));
+
+    // Update English translation when basic info changes
+    if (name === "name" || name === "description") {
+      setTranslations((prev) => ({
+        ...prev,
+        en: {
+          ...prev.en,
+          [name]: value,
+        },
+      }));
+    }
 
     // Clear error when field is edited
     if (errors[name]) {
@@ -131,39 +160,57 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = "Product name is required";
+      newErrors.name = t("products.name_required");
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = "Product description is required";
+      newErrors.description = t("products.description_required");
     }
 
     if (formData.price <= 0) {
-      newErrors.price = "Price must be greater than 0";
+      newErrors.price = t("products.price_required");
     }
 
     if (!formData.categories || formData.categories.length === 0) {
-      newErrors.categories = "At least one category is required";
+      newErrors.categories = t("products.category_required");
     }
 
     if (formData.stock_quantity < 0) {
-      newErrors.stock_quantity = "Stock cannot be negative";
+      newErrors.stock_quantity = t("products.stock_required");
     }
 
     // Validate at least one image is uploaded for the product
     if (formData.images.length === 0) {
-      newErrors.images = "At least one product image is required";
+      newErrors.images = t("products.image_required");
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleTranslationChange = (
+    language: string,
+    field: keyof Translation,
+    value: string
+  ) => {
+    setTranslations((prev) => ({
+      ...prev,
+      [language]: {
+        ...prev[language],
+        [field]: value,
+      },
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
-      onSubmit(formData);
+      const dataWithTranslations = {
+        ...formData,
+        translations,
+      };
+      onSubmit(dataWithTranslations);
     } else {
       toast.error("Please fix the errors in the form");
       // Switch to the tab with errors
@@ -191,23 +238,31 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
             onValueChange={setActiveTab}
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="basic">Basic Info</TabsTrigger>
-              <TabsTrigger value="images">Images</TabsTrigger>
-              <TabsTrigger value="pricing">Pricing & Inventory</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 mb-8">
+              <TabsTrigger value="basic">
+                {t("products.basic_info")}
+              </TabsTrigger>
+              <TabsTrigger value="translations">
+                {t("products.translations")}
+              </TabsTrigger>
+              <TabsTrigger value="images">{t("products.images")}</TabsTrigger>
+              <TabsTrigger value="pricing">
+                {t("products.pricing_inventory")}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic" className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">
-                  Product Name <span className="text-destructive">*</span>
+                  {t("products.product_name")}{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="Enter product name"
+                  placeholder={t("products.enter_name")}
                   aria-invalid={!!errors.name}
                 />
                 {errors.name && (
@@ -217,14 +272,15 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="description">
-                  Description <span className="text-destructive">*</span>
+                  {t("products.product_description")}{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  placeholder="Enter product description"
+                  placeholder={t("products.enter_description")}
                   rows={6}
                   aria-invalid={!!errors.description}
                 />
@@ -318,6 +374,17 @@ const EnhancedProductForm: React.FC<EnhancedProductFormProps> = ({
                   properties.
                 </p>
               </div>
+            </TabsContent>
+
+            <TabsContent value="translations" className="space-y-4">
+              <TranslationForm
+                initialTranslations={translations}
+                onTranslationChange={handleTranslationChange}
+                basicProductInfo={{
+                  name: formData.name,
+                  description: formData.description,
+                }}
+              />
             </TabsContent>
 
             <TabsContent value="images" className="space-y-4">

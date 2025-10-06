@@ -37,11 +37,13 @@ import { Plus, Search, MoreHorizontal, Edit, Trash, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { AppDispatch, RootState } from "@/store";
 import { fetchProducts, deleteProduct } from "@/store/slices/productSlice";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function Products() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { products, error } = useSelector((state: RootState) => state.products);
+  const { t } = useTranslation();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -94,7 +96,7 @@ export default function Products() {
     if (productToDelete) {
       try {
         await dispatch(deleteProduct(productToDelete));
-        toast.success("Product deleted successfully");
+        toast.success(t("products.product_deleted"));
         setIsDeleteDialogOpen(false);
         setProductToDelete(null);
       } catch {
@@ -107,23 +109,24 @@ export default function Products() {
     <DashboardLayout>
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            {t("products.title")}
+          </h1>
           <p className="text-muted-foreground">
-            Manage your product inventory, add new products, or update existing
-            ones.
+            {t("products.manage_inventory")}
           </p>
         </div>
 
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Product Inventory</CardTitle>
+              <CardTitle>{t("products.product_list")}</CardTitle>
               <Button onClick={handleAddProduct}>
-                <Plus className="mr-2 h-4 w-4" /> Add Product
+                <Plus className="mr-2 h-4 w-4" /> {t("products.add_new")}
               </Button>
             </div>
             <CardDescription>
-              A list of all products in your store.
+              {t("products.product_list_description")}
             </CardDescription>
           </CardHeader>
           <CardContent>

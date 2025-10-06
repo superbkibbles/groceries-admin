@@ -21,9 +21,12 @@ import {
   Settings,
   LogOut,
   Bell,
+  FolderTree,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -34,6 +37,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const dispatch = useAppDispatch();
   const { sidebarOpen } = useAppSelector((state) => state.ui);
   const { user } = useAppSelector((state) => state.auth);
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await dispatch(logout());
@@ -41,11 +45,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   };
 
   const navigation = [
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Products", href: "/dashboard/products", icon: Package },
-    { name: "Orders", href: "/dashboard/orders", icon: ShoppingCart },
-    { name: "Customers", href: "/dashboard/customers", icon: Users },
-    { name: "Settings", href: "/dashboard/settings", icon: Settings },
+    {
+      name: t("navigation.dashboard"),
+      href: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      name: t("navigation.products"),
+      href: "/dashboard/products",
+      icon: Package,
+    },
+    {
+      name: t("navigation.categories"),
+      href: "/dashboard/categories",
+      icon: FolderTree,
+    },
+    {
+      name: t("navigation.orders"),
+      href: "/dashboard/orders",
+      icon: ShoppingCart,
+    },
+    {
+      name: t("navigation.customers"),
+      href: "/dashboard/customers",
+      icon: Users,
+    },
+    {
+      name: t("navigation.settings"),
+      href: "/dashboard/settings",
+      icon: Settings,
+    },
   ];
 
   return (
@@ -115,6 +144,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
             </Button>
 
             <div className="flex items-center space-x-4 ml-auto">
+              <LanguageSwitcher />
               <Button variant="ghost" size="icon">
                 <Bell className="h-5 w-5" />
               </Button>
@@ -140,11 +170,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                   <DropdownMenuItem
                     onClick={() => router.push("/dashboard/profile")}
                   >
-                    Profile
+                    {t("navigation.profile")}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    Log out
+                    {t("navigation.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

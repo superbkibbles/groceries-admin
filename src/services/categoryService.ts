@@ -1,12 +1,21 @@
 import api from "@/lib/axios";
 
+export interface Translation {
+  name: string;
+  description: string;
+}
+
 export interface Category {
   id: string;
   name: string;
   description: string;
   slug: string;
   parentId?: string;
-  isActive: boolean;
+  level?: number;
+  path?: string[];
+  translations?: Record<string, Translation>; // Embedded translations
+  children?: Category[];
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -66,6 +75,44 @@ const categoryService = {
     const response = await api.get(`/categories/${categoryId}/products`, {
       params: { page, limit },
     });
+    return response.data;
+  },
+
+  /**
+   * Update category translations
+   */
+  updateCategoryTranslations: async (
+    categoryId: string,
+    translations: Record<string, Translation>
+  ) => {
+    const response = await api.put(`/categories/${categoryId}/translations`, {
+      translations,
+    });
+    return response.data;
+  },
+
+  /**
+   * Add translation to category
+   */
+  addCategoryTranslation: async (
+    categoryId: string,
+    language: string,
+    translation: Translation
+  ) => {
+    const response = await api.post(`/categories/${categoryId}/translations`, {
+      language,
+      translation,
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete category translation
+   */
+  deleteCategoryTranslation: async (categoryId: string, language: string) => {
+    const response = await api.delete(
+      `/categories/${categoryId}/translations/${language}`
+    );
     return response.data;
   },
 };

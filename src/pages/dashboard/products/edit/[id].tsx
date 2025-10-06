@@ -70,6 +70,7 @@ export default function EditProduct() {
         sku: data.sku || "",
         attributes: data.attributes || {},
         images: data.images || [],
+        translations: data.translations || {},
       };
 
       // Update the product using Redux

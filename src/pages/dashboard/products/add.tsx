@@ -48,6 +48,7 @@ export default function AddProduct() {
         sku: data.sku || "",
         attributes: data.attributes || {},
         images: [],
+        translations: data.translations || {},
       };
 
       // Create the product using Redux

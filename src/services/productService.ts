@@ -1,5 +1,10 @@
 import api from "@/lib/axios";
 
+export interface Translation {
+  name: string;
+  description: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -10,6 +15,7 @@ export interface Product {
   stock_quantity: number; // Renamed to match backend
   sku?: string;
   attributes?: Record<string, string | number | boolean>; // Generic attributes object for variations
+  translations?: Record<string, Translation>; // Embedded translations
   created_at: string; // Snake case to match backend
   updated_at: string; // Snake case to match backend
 }
@@ -101,6 +107,44 @@ const productService = {
     const response = await api.delete(`/products/${productId}/images`, {
       data: { imageUrl },
     });
+    return response.data;
+  },
+
+  /**
+   * Update product translations
+   */
+  updateProductTranslations: async (
+    productId: string,
+    translations: Record<string, Translation>
+  ) => {
+    const response = await api.put(`/products/${productId}/translations`, {
+      translations,
+    });
+    return response.data;
+  },
+
+  /**
+   * Add translation to product
+   */
+  addProductTranslation: async (
+    productId: string,
+    language: string,
+    translation: Translation
+  ) => {
+    const response = await api.post(`/products/${productId}/translations`, {
+      language,
+      translation,
+    });
+    return response.data;
+  },
+
+  /**
+   * Delete product translation
+   */
+  deleteProductTranslation: async (productId: string, language: string) => {
+    const response = await api.delete(
+      `/products/${productId}/translations/${language}`
+    );
     return response.data;
   },
 };
