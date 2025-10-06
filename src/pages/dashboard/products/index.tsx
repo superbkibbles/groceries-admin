@@ -66,10 +66,10 @@ export default function Products() {
     () =>
       products?.filter(
         (product) =>
-          product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (product.categories &&
-            product.categories.some((cat) =>
-              cat.toLowerCase().includes(searchQuery.toLowerCase())
+          product?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (product?.categories &&
+            product?.categories?.some((cat) =>
+              cat?.toLowerCase().includes(searchQuery.toLowerCase())
             ))
       ),
     [products, searchQuery]

@@ -9,7 +9,6 @@ import { AppDispatch, RootState } from "@/store";
 import {
   fetchProductById,
   updateProduct,
-  uploadProductImage,
   clearCurrentProduct,
 } from "@/store/slices/productSlice";
 import { fetchCategories } from "@/store/slices/categorySlice";
@@ -50,11 +49,6 @@ export default function EditProduct() {
     }
   }, [error, router]);
 
-  // Helper function to check if item is a File
-  const isFile = (item: unknown): item is File => {
-    return item instanceof File;
-  };
-
   const handleSubmit = async (data: ProductFormData | undefined) => {
     if (!data) return;
     if (!id || typeof id !== "string") return;
@@ -82,23 +76,6 @@ export default function EditProduct() {
       );
 
       if (updateProduct.fulfilled.match(resultAction)) {
-        // Handle image uploads if there are new images (if using separate upload endpoint)
-        if (data.images && data.images.length > 0) {
-          // This is a simplified example - in a real app, you'd need to track which images are new
-          // and only upload those, and also handle image deletions
-          for (const imageItem of data.images) {
-            // Check if this is a File object (new upload) or a string URL (existing image)
-            if (isFile(imageItem)) {
-              await dispatch(
-                uploadProductImage({
-                  productId: id,
-                  imageFile: imageItem,
-                })
-              );
-            }
-          }
-        }
-
         toast.success("Product updated successfully");
         router.push("/dashboard/products");
       } else {

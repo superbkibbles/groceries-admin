@@ -6,7 +6,7 @@ import EnhancedProductForm from "@/components/products/EnhancedProductForm";
 import { toast } from "sonner";
 import { Product } from "@/services/productService";
 import { AppDispatch, RootState } from "@/store";
-import { createProduct, uploadProductImage } from "@/store/slices/productSlice";
+import { createProduct } from "@/store/slices/productSlice";
 import { fetchCategories } from "@/store/slices/categorySlice";
 
 // Type for our product form data - matches the backend structure
@@ -30,11 +30,6 @@ export default function AddProduct() {
     }
   }, [error]);
 
-  // Helper function to check if item is a File
-  const isFile = (item: unknown): item is File => {
-    return item instanceof File;
-  };
-
   const handleSubmit = async (data: ProductFormData | undefined) => {
     if (!data) return;
     try {
@@ -47,7 +42,8 @@ export default function AddProduct() {
         stock_quantity: data.stock_quantity,
         sku: data.sku || "",
         attributes: data.attributes || {},
-        images: [],
+        // Images now come as UploadThing URLs from ImageUpload
+        images: data.images || [],
         translations: data.translations || {},
       };
 
@@ -55,23 +51,6 @@ export default function AddProduct() {
       const resultAction = await dispatch(createProduct(productData));
 
       if (createProduct.fulfilled.match(resultAction)) {
-        const createdProduct = resultAction.payload;
-
-        // Handle image uploads if there are images (if using separate upload endpoint)
-        if (data.images && data.images.length > 0) {
-          for (const imageItem of data.images) {
-            // Check if this is a File object (new upload) or a string URL
-            if (isFile(imageItem)) {
-              await dispatch(
-                uploadProductImage({
-                  productId: createdProduct.id,
-                  imageFile: imageItem,
-                })
-              );
-            }
-          }
-        }
-
         toast.success("Product created successfully");
         router.push("/dashboard/products");
       } else {

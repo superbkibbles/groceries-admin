@@ -11,7 +11,6 @@ export interface Product_RESPONSE {
 }
 
 export interface Product {
-  data: never[];
   id: string;
   name: string;
   description: string;
