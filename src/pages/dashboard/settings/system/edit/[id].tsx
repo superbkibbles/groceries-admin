@@ -32,7 +32,7 @@ export default function EditSystemSetting() {
   useEffect(() => {
     // Fetch settings if not already loaded
     if (isAuthenticated && systemSettings.length === 0) {
-      dispatch(fetchSystemSettings());
+      dispatch(fetchSystemSettings({}));
     }
   }, [dispatch, isAuthenticated, systemSettings.length]);
 

@@ -30,7 +30,7 @@ export default function EditUserSetting() {
   useEffect(() => {
     // Fetch settings if not already loaded
     if (isAuthenticated && userSettings.length === 0) {
-      dispatch(fetchUserSettings());
+      dispatch(fetchUserSettings({}));
     }
   }, [dispatch, isAuthenticated, userSettings.length]);
 

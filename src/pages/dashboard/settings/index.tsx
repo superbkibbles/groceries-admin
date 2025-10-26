@@ -47,8 +47,8 @@ export default function Settings() {
   useEffect(() => {
     // Fetch settings when component mounts
     if (isAuthenticated) {
-      dispatch(fetchSystemSettings());
-      dispatch(fetchUserSettings());
+      dispatch(fetchSystemSettings({}));
+      dispatch(fetchUserSettings({}));
     }
   }, [dispatch, isAuthenticated]);
 

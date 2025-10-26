@@ -69,7 +69,7 @@ export default function Orders() {
     setCurrentPage(page);
   };
 
-  const handleUpdateStatus = (orderId: string, status: string) => {
+  const handleUpdateStatus = (orderId: string, status: "pending" | "processing" | "shipped" | "delivered" | "cancelled") => {
     dispatch(updateOrderStatus({ orderId, status }));
     toast.success(`Order status updated to ${status}`);
   };

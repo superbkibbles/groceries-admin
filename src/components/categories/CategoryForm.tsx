@@ -111,10 +111,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
     }
   };
 
-  const handleTranslationsSubmit = (
-    newTranslations: Record<string, Translation>
+  const handleTranslationChange = (
+    language: string,
+    field: keyof Translation,
+    value: string
   ) => {
-    setTranslations(newTranslations);
+    setTranslations((prev) => ({
+      ...prev,
+      [language]: {
+        ...prev[language],
+        [field]: value,
+      },
+    }));
   };
 
   const validateForm = () => {
@@ -264,8 +272,11 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
             <TabsContent value="translations" className="space-y-4">
               <TranslationForm
                 initialTranslations={translations}
-                onSubmit={handleTranslationsSubmit}
-                isLoading={isSubmitting}
+                onTranslationChange={handleTranslationChange}
+                basicProductInfo={{
+                  name: formData.name,
+                  description: formData.description,
+                }}
               />
             </TabsContent>
           </Tabs>

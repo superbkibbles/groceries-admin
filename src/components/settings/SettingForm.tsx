@@ -79,7 +79,7 @@ const SettingForm = ({
 
   const handleTypeChange = (value: string) => {
     setSettingType(value);
-    setValue("type", value);
+    setValue("type", value as "string" | "number" | "boolean" | "json");
   };
 
   const handleFormSubmit = (data: {
@@ -112,7 +112,8 @@ const SettingForm = ({
     onSubmit({
       ...data,
       value: finalValue,
-    });
+      type: settingType as "string" | "number" | "boolean" | "json",
+    } as Setting);
   };
 
   return (

@@ -36,9 +36,9 @@ interface Customer {
   firstName: string;
   lastName: string;
   role: string;
-  active: boolean;
-  createdAt: string;
-  updatedAt: string;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Address {
@@ -235,15 +235,15 @@ export default function CustomerDetail() {
                       <h3 className="text-sm font-medium text-muted-foreground">
                         Status
                       </h3>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          customer.active
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {customer.active ? "Active" : "Inactive"}
-                      </span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            customer.active !== false
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {customer.active !== false ? "Active" : "Inactive"}
+                        </span>
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -254,7 +254,7 @@ export default function CustomerDetail() {
                       <div className="flex items-center">
                         <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
                         <p className="text-base">
-                          {formatDate(customer.createdAt)}
+                          {customer.createdAt ? formatDate(customer.createdAt) : "N/A"}
                         </p>
                       </div>
                     </div>
@@ -262,9 +262,9 @@ export default function CustomerDetail() {
                       <h3 className="text-sm font-medium text-muted-foreground">
                         Last Updated
                       </h3>
-                      <p className="text-base">
-                        {formatDate(customer.updatedAt)}
-                      </p>
+                        <p className="text-base">
+                          {customer.updatedAt ? formatDate(customer.updatedAt) : "N/A"}
+                        </p>
                     </div>
                     <div>
                       <h3 className="text-sm font-medium text-muted-foreground">

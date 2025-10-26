@@ -48,10 +48,6 @@ export default function Customers() {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, [currentPage, fetchCustomers]);
-
   const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
@@ -69,6 +65,10 @@ export default function Customers() {
       setLoading(false);
     }
   }, [currentPage, limit]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
