@@ -1,16 +1,33 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, MoreHorizontal, Eye, Package, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchOrders, updateOrderStatus } from '@/store/slices/orderSlice';
-import type { Order } from '@/services/orderService';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, MoreHorizontal, Eye, Package, XCircle } from "lucide-react";
+import { toast } from "sonner";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
 
 // Default pagination values
 const DEFAULT_PAGE = 1;
@@ -19,8 +36,10 @@ const DEFAULT_LIMIT = 10;
 export default function Orders() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { orders, totalOrders, loading, error } = useAppSelector((state) => state.orders);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { orders, totalOrders, loading, error } = useAppSelector(
+    (state) => state.orders
+  );
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
   const [limit] = useState(DEFAULT_LIMIT);
 
@@ -30,9 +49,12 @@ export default function Orders() {
   }, [dispatch, currentPage, limit]);
 
   // Filter orders based on search query
-  const filteredOrders = orders.filter((order) =>
-    (order.id && order.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (order.userId && order.userId.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredOrders = orders.filter(
+    (order) =>
+      (order.id &&
+        order.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (order.userId &&
+        order.userId.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,28 +75,28 @@ export default function Orders() {
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'processing':
-      case 'pending':
-      case 'paid':
-        return 'bg-blue-100 text-blue-800';
-      case 'shipped':
-        return 'bg-purple-100 text-purple-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "processing":
+      case "pending":
+      case "paid":
+        return "bg-blue-100 text-blue-800";
+      case "shipped":
+        return "bg-purple-100 text-purple-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -132,7 +154,10 @@ export default function Orders() {
                     </TableRow>
                   ) : error ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-24 text-center text-red-500">
+                      <TableCell
+                        colSpan={6}
+                        className="h-24 text-center text-red-500"
+                      >
                         Error loading orders: {error}
                       </TableCell>
                     </TableRow>
@@ -145,21 +170,30 @@ export default function Orders() {
                   ) : (
                     filteredOrders.map((order) => (
                       <TableRow key={order.id}>
-                        <TableCell className="font-medium">{order.id || 'N/A'}</TableCell>
+                        <TableCell className="font-medium">
+                          {order.id || "N/A"}
+                        </TableCell>
                         <TableCell>
                           <div>
-                            <p>{order.userId || 'N/A'}</p>
+                            <p>{order.userId || "N/A"}</p>
                           </div>
                         </TableCell>
                         <TableCell>{formatDate(order.createdAt)}</TableCell>
                         <TableCell>
                           <span
-                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(order.status)}`}
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(
+                              order.status
+                            )}`}
                           >
-                            {order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : 'Unknown'}
+                            {order.status
+                              ? order.status.charAt(0).toUpperCase() +
+                                order.status.slice(1)
+                              : "Unknown"}
                           </span>
                         </TableCell>
-                        <TableCell>${order.total ? order.total.toFixed(2) : '0.00'}</TableCell>
+                        <TableCell>
+                          ${order.total ? order.total.toFixed(2) : "0.00"}
+                        </TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -169,18 +203,29 @@ export default function Orders() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewOrder(order.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleViewOrder(order.id)}
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 View details
                               </DropdownMenuItem>
-                              {order.status !== 'shipped' && order.status !== 'delivered' && (
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, 'shipped')}>
-                                  <Package className="mr-2 h-4 w-4" />
-                                  Mark as shipped
-                                </DropdownMenuItem>
-                              )}
-                              {order.status !== 'cancelled' && (
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, 'cancelled')}>
+                              {order.status !== "shipped" &&
+                                order.status !== "delivered" && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleUpdateStatus(order.id, "shipped")
+                                    }
+                                  >
+                                    <Package className="mr-2 h-4 w-4" />
+                                    Mark as shipped
+                                  </DropdownMenuItem>
+                                )}
+                              {order.status !== "cancelled" && (
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleUpdateStatus(order.id, "cancelled")
+                                  }
+                                >
                                   <XCircle className="mr-2 h-4 w-4" />
                                   Cancel order
                                 </DropdownMenuItem>
@@ -194,12 +239,16 @@ export default function Orders() {
                 </TableBody>
               </Table>
             </div>
-            
+
             {/* Pagination */}
             {!loading && totalOrders > 0 && (
               <div className="flex items-center justify-between space-x-2 py-4">
                 <div className="text-sm text-muted-foreground">
-                  Showing <span className="font-medium">{(currentPage - 1) * limit + 1}</span> to{" "}
+                  Showing{" "}
+                  <span className="font-medium">
+                    {(currentPage - 1) * limit + 1}
+                  </span>{" "}
+                  to{" "}
                   <span className="font-medium">
                     {Math.min(currentPage * limit, totalOrders)}
                   </span>{" "}

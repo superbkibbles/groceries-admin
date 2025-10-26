@@ -1,6 +1,10 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import settingService from '@/services/settingService';
-import type { Setting, SettingFilter, CreateSettingDto } from '@/services/settingService';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import settingService from "@/services/settingService";
+import type {
+  Setting,
+  SettingFilter,
+  CreateSettingDto,
+} from "@/services/settingService";
 
 interface SettingsState {
   systemSettings: Setting[];
@@ -24,110 +28,143 @@ const initialState: SettingsState = {
 
 // Fetch system settings
 export const fetchSystemSettings = createAsyncThunk(
-  'settings/fetchSystemSettings',
+  "settings/fetchSystemSettings",
   async (filters: SettingFilter = {}, { rejectWithValue }) => {
     try {
       const response = await settingService.getSystemSettings(filters);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch system settings');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to fetch system settings"
+      );
     }
   }
 );
 
 // Fetch user settings
 export const fetchUserSettings = createAsyncThunk(
-  'settings/fetchUserSettings',
+  "settings/fetchUserSettings",
   async (filters: SettingFilter = {}, { rejectWithValue }) => {
     try {
       const response = await settingService.getUserSettings(filters);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch user settings');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to fetch user settings"
+      );
     }
   }
 );
 
 // Create system setting
 export const createSystemSetting = createAsyncThunk(
-  'settings/createSystemSetting',
+  "settings/createSystemSetting",
   async (settingData: CreateSettingDto, { rejectWithValue }) => {
     try {
       const response = await settingService.createSystemSetting(settingData);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to create system setting');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to create system setting"
+      );
     }
   }
 );
 
 // Create user setting
 export const createUserSetting = createAsyncThunk(
-  'settings/createUserSetting',
+  "settings/createUserSetting",
   async (settingData: CreateSettingDto, { rejectWithValue }) => {
     try {
       const response = await settingService.createUserSetting(settingData);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to create user setting');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to create user setting"
+      );
     }
   }
 );
 
 // Update system setting
 export const updateSystemSetting = createAsyncThunk(
-  'settings/updateSystemSetting',
-  async ({ id, settingData }: { id: string; settingData: Partial<CreateSettingDto> }, { rejectWithValue }) => {
+  "settings/updateSystemSetting",
+  async (
+    { id, settingData }: { id: string; settingData: Partial<CreateSettingDto> },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await settingService.updateSystemSetting(id, settingData);
+      const response = await settingService.updateSystemSetting(
+        id,
+        settingData
+      );
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to update system setting');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to update system setting"
+      );
     }
   }
 );
 
 // Update user setting
 export const updateUserSetting = createAsyncThunk(
-  'settings/updateUserSetting',
-  async ({ id, settingData }: { id: string; settingData: Partial<CreateSettingDto> }, { rejectWithValue }) => {
+  "settings/updateUserSetting",
+  async (
+    { id, settingData }: { id: string; settingData: Partial<CreateSettingDto> },
+    { rejectWithValue }
+  ) => {
     try {
       const response = await settingService.updateUserSetting(id, settingData);
       return response;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to update user setting');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to update user setting"
+      );
     }
   }
 );
 
 // Delete system setting
 export const deleteSystemSetting = createAsyncThunk(
-  'settings/deleteSystemSetting',
+  "settings/deleteSystemSetting",
   async (id: string, { rejectWithValue }) => {
     try {
       await settingService.deleteSystemSetting(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to delete system setting');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to delete system setting"
+      );
     }
   }
 );
 
 // Delete user setting
 export const deleteUserSetting = createAsyncThunk(
-  'settings/deleteUserSetting',
+  "settings/deleteUserSetting",
   async (id: string, { rejectWithValue }) => {
     try {
       await settingService.deleteUserSetting(id);
       return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to delete user setting');
+    } catch (error: unknown) {
+      return rejectWithValue(
+        (error as { response?: { data?: { error?: string } } })?.response?.data
+          ?.error || "Failed to delete user setting"
+      );
     }
   }
 );
 
 const settingsSlice = createSlice({
-  name: 'settings',
+  name: "settings",
   initialState,
   reducers: {
     clearCurrentSetting: (state) => {
@@ -153,7 +190,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Fetch user settings
       .addCase(fetchUserSettings.pending, (state) => {
         state.loading = true;
@@ -168,7 +205,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Create system setting
       .addCase(createSystemSetting.pending, (state) => {
         state.loading = true;
@@ -183,7 +220,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Create user setting
       .addCase(createUserSetting.pending, (state) => {
         state.loading = true;
@@ -198,7 +235,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Update system setting
       .addCase(updateSystemSetting.pending, (state) => {
         state.loading = true;
@@ -206,7 +243,9 @@ const settingsSlice = createSlice({
       })
       .addCase(updateSystemSetting.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.systemSettings.findIndex(setting => setting.id === action.payload.id);
+        const index = state.systemSettings.findIndex(
+          (setting) => setting.id === action.payload.id
+        );
         if (index !== -1) {
           state.systemSettings[index] = action.payload;
         }
@@ -216,7 +255,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Update user setting
       .addCase(updateUserSetting.pending, (state) => {
         state.loading = true;
@@ -224,7 +263,9 @@ const settingsSlice = createSlice({
       })
       .addCase(updateUserSetting.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.userSettings.findIndex(setting => setting.id === action.payload.id);
+        const index = state.userSettings.findIndex(
+          (setting) => setting.id === action.payload.id
+        );
         if (index !== -1) {
           state.userSettings[index] = action.payload;
         }
@@ -234,7 +275,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Delete system setting
       .addCase(deleteSystemSetting.pending, (state) => {
         state.loading = true;
@@ -242,9 +283,14 @@ const settingsSlice = createSlice({
       })
       .addCase(deleteSystemSetting.fulfilled, (state, action) => {
         state.loading = false;
-        state.systemSettings = state.systemSettings.filter(setting => setting.id !== action.payload);
+        state.systemSettings = state.systemSettings.filter(
+          (setting) => setting.id !== action.payload
+        );
         state.totalSystemSettings -= 1;
-        if (state.currentSetting && state.currentSetting.id === action.payload) {
+        if (
+          state.currentSetting &&
+          state.currentSetting.id === action.payload
+        ) {
           state.currentSetting = null;
         }
       })
@@ -252,7 +298,7 @@ const settingsSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
-      
+
       // Delete user setting
       .addCase(deleteUserSetting.pending, (state) => {
         state.loading = true;
@@ -260,9 +306,14 @@ const settingsSlice = createSlice({
       })
       .addCase(deleteUserSetting.fulfilled, (state, action) => {
         state.loading = false;
-        state.userSettings = state.userSettings.filter(setting => setting.id !== action.payload);
+        state.userSettings = state.userSettings.filter(
+          (setting) => setting.id !== action.payload
+        );
         state.totalUserSettings -= 1;
-        if (state.currentSetting && state.currentSetting.id === action.payload) {
+        if (
+          state.currentSetting &&
+          state.currentSetting.id === action.payload
+        ) {
           state.currentSetting = null;
         }
       })

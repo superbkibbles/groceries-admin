@@ -1,23 +1,29 @@
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import SettingForm from '@/components/settings/SettingForm';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchUserSettings, updateUserSetting, setCurrentSetting } from '@/store/slices/settingsSlice';
-import { Setting } from '@/services/settingService';
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import SettingForm from "@/components/settings/SettingForm";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  fetchUserSettings,
+  updateUserSetting,
+  setCurrentSetting,
+} from "@/store/slices/settingsSlice";
+import { Setting } from "@/services/settingService";
 
 export default function EditUserSetting() {
   const router = useRouter();
   const { id } = router.query;
   const dispatch = useAppDispatch();
-  const { userSettings, loading, error } = useAppSelector((state) => state.settings);
+  const { userSettings, loading, error } = useAppSelector(
+    (state) => state.settings
+  );
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const [setting, setSetting] = useState<Setting | null>(null);
 
   useEffect(() => {
     // If not authenticated, redirect to login
     if (!isAuthenticated) {
-      router.push('/login');
+      router.push("/login");
     }
   }, [isAuthenticated, router]);
 
@@ -31,31 +37,38 @@ export default function EditUserSetting() {
   useEffect(() => {
     // Find the setting to edit
     if (id && userSettings.length > 0) {
-      const foundSetting = userSettings.find(s => s.id === id);
+      const foundSetting = userSettings.find((s) => s.id === id);
       if (foundSetting) {
         setSetting(foundSetting);
         dispatch(setCurrentSetting(foundSetting));
       } else {
         // Setting not found, redirect back
-        router.push('/dashboard/settings?tab=user');
+        router.push("/dashboard/settings?tab=user");
       }
     }
   }, [id, userSettings, dispatch, router]);
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: {
+    key: string;
+    description: string;
+    type: string;
+    value: string | number | boolean | object;
+  }) => {
     if (!id) return;
-    
+
     try {
-      await dispatch(updateUserSetting({ 
-        id: id as string, 
-        settingData: {
-          value: data.value,
-          description: data.description
-        } 
-      })).unwrap();
-      router.push('/dashboard/settings?tab=user');
+      await dispatch(
+        updateUserSetting({
+          id: id as string,
+          settingData: {
+            value: data.value,
+            description: data.description,
+          },
+        })
+      ).unwrap();
+      router.push("/dashboard/settings?tab=user");
     } catch (error) {
-      console.error('Failed to update user setting:', error);
+      console.error("Failed to update user setting:", error);
     }
   };
 
@@ -79,13 +92,17 @@ export default function EditUserSetting() {
           <h1 className="text-3xl font-bold">Edit User Setting</h1>
         </div>
 
-        {error && <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">{error}</div>}
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
-        <SettingForm 
-          type="user" 
+        <SettingForm
+          type="user"
           initialData={setting}
-          onSubmit={handleSubmit} 
-          isLoading={loading} 
+          onSubmit={handleSubmit}
+          isLoading={loading}
         />
       </div>
     </DashboardLayout>

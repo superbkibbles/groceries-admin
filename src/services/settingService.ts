@@ -1,11 +1,11 @@
-import api from '@/lib/axios';
+import api from "@/lib/axios";
 
 export interface Setting {
   id: string;
   key: string;
-  value: any;
-  type: 'string' | 'number' | 'boolean' | 'json';
-  scope: 'system' | 'user';
+  value: string | number | boolean | object;
+  type: "string" | "number" | "boolean" | "json";
+  scope: "system" | "user";
   userId?: string;
   description: string;
   createdAt: string;
@@ -21,8 +21,8 @@ export interface SettingFilter {
 
 export interface CreateSettingDto {
   key: string;
-  value: any;
-  type: 'string' | 'number' | 'boolean' | 'json';
+  value: string | number | boolean | object;
+  type: "string" | "number" | "boolean" | "json";
   description: string;
 }
 
@@ -31,7 +31,7 @@ const settingService = {
    * Get all system settings with optional filtering
    */
   getSystemSettings: async (filters: SettingFilter = {}) => {
-    const response = await api.get('/settings/system', { params: filters });
+    const response = await api.get("/settings/system", { params: filters });
     return response.data;
   },
 
@@ -47,14 +47,17 @@ const settingService = {
    * Create new system setting
    */
   createSystemSetting: async (settingData: CreateSettingDto) => {
-    const response = await api.post('/settings/system', settingData);
+    const response = await api.post("/settings/system", settingData);
     return response.data;
   },
 
   /**
    * Update system setting
    */
-  updateSystemSetting: async (id: string, settingData: Partial<CreateSettingDto>) => {
+  updateSystemSetting: async (
+    id: string,
+    settingData: Partial<CreateSettingDto>
+  ) => {
     const response = await api.put(`/settings/system/${id}`, settingData);
     return response.data;
   },
@@ -71,7 +74,7 @@ const settingService = {
    * Get all user settings with optional filtering
    */
   getUserSettings: async (filters: SettingFilter = {}) => {
-    const response = await api.get('/settings/user', { params: filters });
+    const response = await api.get("/settings/user", { params: filters });
     return response.data;
   },
 
@@ -87,14 +90,17 @@ const settingService = {
    * Create new user setting
    */
   createUserSetting: async (settingData: CreateSettingDto) => {
-    const response = await api.post('/settings/user', settingData);
+    const response = await api.post("/settings/user", settingData);
     return response.data;
   },
 
   /**
    * Update user setting
    */
-  updateUserSetting: async (id: string, settingData: Partial<CreateSettingDto>) => {
+  updateUserSetting: async (
+    id: string,
+    settingData: Partial<CreateSettingDto>
+  ) => {
     const response = await api.put(`/settings/user/${id}`, settingData);
     return response.data;
   },

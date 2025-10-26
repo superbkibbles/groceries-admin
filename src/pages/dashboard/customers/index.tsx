@@ -1,14 +1,32 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import DashboardLayout from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Search, MoreHorizontal, Eye, Mail, Calendar } from 'lucide-react';
-import { toast } from 'sonner';
-import { userService } from '@/services';
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/router";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, MoreHorizontal, Eye, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { userService } from "@/services";
 
 // Types
 interface Customer {
@@ -24,7 +42,7 @@ interface Customer {
 export default function Customers() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [totalCustomers, setTotalCustomers] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,34 +50,37 @@ export default function Customers() {
 
   useEffect(() => {
     fetchCustomers();
-  }, [currentPage]);
+  }, [currentPage, fetchCustomers]);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await userService.listUsers({
         page: currentPage,
         limit,
-        role: 'customer'
+        role: "customer",
       });
       setCustomers(response.users);
       setTotalCustomers(response.total);
     } catch (error) {
-      console.error('Failed to fetch customers:', error);
-      toast.error('Failed to load customers');
+      console.error("Failed to fetch customers:", error);
+      toast.error("Failed to load customers");
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, limit]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
   // Filter customers based on search query
-  const filteredCustomers = customers.filter((customer) =>
-    customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    `${customer.firstName} ${customer.lastName}`.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCustomers = customers.filter(
+    (customer) =>
+      customer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      `${customer.firstName} ${customer.lastName}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
   );
 
   const handleViewCustomer = (id: string) => {
@@ -67,10 +88,10 @@ export default function Customers() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -89,7 +110,9 @@ export default function Customers() {
             <div className="flex items-center justify-between">
               <CardTitle>Customer List</CardTitle>
             </div>
-            <CardDescription>A list of all customers registered in your store.</CardDescription>
+            <CardDescription>
+              A list of all customers registered in your store.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center py-4">
@@ -139,11 +162,11 @@ export default function Customers() {
                           <span
                             className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               customer.active
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
                             }`}
                           >
-                            {customer.active ? 'Active' : 'Inactive'}
+                            {customer.active ? "Active" : "Inactive"}
                           </span>
                         </TableCell>
                         <TableCell>{formatDate(customer.createdAt)}</TableCell>
@@ -156,11 +179,17 @@ export default function Customers() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewCustomer(customer.id)}>
+                              <DropdownMenuItem
+                                onClick={() => handleViewCustomer(customer.id)}
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 View details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => window.location.href = `mailto:${customer.email}`}>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  (window.location.href = `mailto:${customer.email}`)
+                                }
+                              >
                                 <Mail className="mr-2 h-4 w-4" />
                                 Email customer
                               </DropdownMenuItem>
