@@ -1,4 +1,4 @@
-name: Admin Panel CI
+name: Admin Panel CI/CD
 
 on:
   pull_request:
@@ -37,7 +37,7 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: http://localhost/api/v1
+          NEXT_PUBLIC_API_URL: http://91.99.95.75/api/v1
 
       - name: Run tests
         run: |
@@ -72,3 +72,40 @@ jobs:
             echo "✅ Admin panel build passed successfully"
           fi
 
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 91.99.95.75
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/groceries-admin
+            git pull origin main
+            ./deploy.sh deploy
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 91.99.95.75
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            cd /opt/groceries-admin
+            ./deploy.sh status
+
+            # Wait for health check
+            sleep 30
+
+            # Test if the application is responding
+            curl -f http://localhost/admin || exit 1
+            echo "✅ Deployment verification successful"

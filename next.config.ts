@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   basePath: "/admin",
   reactStrictMode: true,
+  output: "standalone",
   images: {
     remotePatterns: [
       {
