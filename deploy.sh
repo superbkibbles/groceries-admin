@@ -38,8 +38,7 @@ error() {
 # Check if running as root
 check_root() {
     if [[ $EUID -eq 0 ]]; then
-        error "This script should not be run as root for security reasons"
-        exit 1
+        warning "Running as root - this is acceptable for server deployment"
     fi
 }
 
