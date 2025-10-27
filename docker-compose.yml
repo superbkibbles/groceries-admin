@@ -26,6 +26,8 @@ services:
     image: your-backend-image:latest  # Replace with your actual backend image
     container_name: groceries-backend-api
     restart: unless-stopped
+    profiles:
+      - backend  # Only start when explicitly requested
     environment:
       - NODE_ENV=production
       - PORT=8080
@@ -51,8 +53,7 @@ services:
     depends_on:
       admin-panel:
         condition: service_healthy
-      backend-api:
-        condition: service_healthy
+      # backend-api is optional - only started with --profile backend
     networks:
       - admin-network
     healthcheck:
