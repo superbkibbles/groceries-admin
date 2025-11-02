@@ -23,7 +23,7 @@ services:
       - "traefik.http.routers.admin.rule=Host(`91.99.95.75`) && PathPrefix(`/admin`)"
 
   backend-api:
-    image: your-backend-image:latest  # Replace with your actual backend image
+    image: groceries-backend-backend:latest  # Replace with your actual backend image
     container_name: groceries-backend-api
     restart: unless-stopped
     # Removed profile so it starts automatically with nginx
