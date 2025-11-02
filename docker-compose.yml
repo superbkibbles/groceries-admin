@@ -56,7 +56,8 @@ services:
         condition: service_started
     networks:
       - admin-network
-      - groceries-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -67,5 +68,3 @@ services:
 networks:
   admin-network:
     driver: bridge
-  groceries-network:
-    external: true
