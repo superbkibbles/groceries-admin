@@ -56,6 +56,7 @@ services:
         condition: service_started
     networks:
       - admin-network
+      - groceries-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
@@ -66,3 +67,5 @@ services:
 networks:
   admin-network:
     driver: bridge
+  groceries-network:
+    external: true
