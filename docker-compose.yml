@@ -26,8 +26,7 @@ services:
     image: your-backend-image:latest  # Replace with your actual backend image
     container_name: groceries-backend-api
     restart: unless-stopped
-    profiles:
-      - backend  # Only start when explicitly requested
+    # Removed profile so it starts automatically with nginx
     environment:
       - NODE_ENV=production
       - PORT=8080
@@ -53,7 +52,8 @@ services:
     depends_on:
       admin-panel:
         condition: service_healthy
-      # backend-api is optional - only started with --profile backend
+      backend-api:
+        condition: service_started
     networks:
       - admin-network
     healthcheck:
