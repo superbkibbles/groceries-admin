@@ -23,7 +23,7 @@ const authService = {
    * Login user with email and password
    */
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    const response = await api.post("/users/login", credentials, {
+    const response = await api.post("/users/login-admin", credentials, {
       headers: {
         user_role: "admin",
       },
