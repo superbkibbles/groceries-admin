@@ -26,13 +26,23 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
-  const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>(
-    localizationService.getCurrentLanguage()
-  );
+  // Initialize with a stable default to avoid SSR/CSR hydration mismatch.
+  // We'll sync with stored/browser preference after mount.
+  const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>("en");
   const [supportedLanguages] = useState<SupportedLanguage[]>(
     localizationService.getSupportedLanguages()
   );
   const [isLoading, setIsLoading] = useState(false);
+
+  // After mount, read the real preferred language from the client and update state.
+  useEffect(() => {
+    const lang = localizationService.getCurrentLanguage();
+    if (lang !== currentLanguage) {
+      setCurrentLanguage(lang);
+    }
+  // We intentionally want this to run only once on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Initialize document direction on mount
   useEffect(() => {
@@ -64,7 +74,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     currentLanguage,
     supportedLanguages,
     switchLanguage,
-    isRTL: localizationService.isRTL(),
+    isRTL: currentLanguage === "ar",
     isLoading,
   };
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "./button";
 import {
   DropdownMenu,
@@ -21,6 +21,11 @@ interface LanguageOption {
 export const LanguageSwitcher: React.FC = () => {
   const { currentLanguage, switchLanguage, isLoading } = useLanguage();
   const { t } = useTranslation();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const languageOptions: LanguageOption[] = [
     {
@@ -54,7 +59,11 @@ export const LanguageSwitcher: React.FC = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm" disabled={isLoading}>
           <Globe className="h-4 w-4 mr-2" />
-          {currentLanguageOption?.flag} {currentLanguageOption?.nativeName}
+          <span suppressHydrationWarning>
+            {mounted
+              ? `${currentLanguageOption?.flag} ${currentLanguageOption?.nativeName}`
+              : ""}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">

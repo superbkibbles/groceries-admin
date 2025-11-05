@@ -127,7 +127,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 }`}
               >
                 <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
+                <span suppressHydrationWarning>{item.name}</span>
               </Link>
             );
           })}
