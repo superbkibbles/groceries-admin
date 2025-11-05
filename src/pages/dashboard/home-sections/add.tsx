@@ -6,6 +6,7 @@ import {
   type HomeSection,
 } from "@/services/homeSectionService";
 import { toast } from "sonner";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 export default function AddHomeSectionPage() {
   const router = useRouter();
@@ -25,5 +26,9 @@ export default function AddHomeSectionPage() {
     }
   };
 
-  return <HomeSectionForm onSubmit={handleSubmit} submitting={submitting} />;
+  return (
+    <DashboardLayout>
+      <HomeSectionForm onSubmit={handleSubmit} submitting={submitting} />
+    </DashboardLayout>
+  );
 }

@@ -6,6 +6,7 @@ import {
   type HomeSection,
 } from "@/services/homeSectionService";
 import { toast } from "sonner";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 
 export default function EditHomeSectionPage() {
   const router = useRouter();
@@ -45,14 +46,26 @@ export default function EditHomeSectionPage() {
     }
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (!item) return <p>Not found</p>;
+  if (loading)
+    return (
+      <DashboardLayout>
+        <p>Loading...</p>
+      </DashboardLayout>
+    );
+  if (!item)
+    return (
+      <DashboardLayout>
+        <p>Not found</p>
+      </DashboardLayout>
+    );
 
   return (
-    <HomeSectionForm
-      initialData={item}
-      onSubmit={handleSubmit}
-      submitting={submitting}
-    />
+    <DashboardLayout>
+      <HomeSectionForm
+        initialData={item}
+        onSubmit={handleSubmit}
+        submitting={submitting}
+      />
+    </DashboardLayout>
   );
 }

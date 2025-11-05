@@ -61,6 +61,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       icon: FolderTree,
     },
     {
+      name: "Home Sections",
+      href: "/dashboard/home-sections",
+      icon: LayoutDashboard,
+    },
+    {
       name: t("navigation.orders"),
       href: "/dashboard/orders",
       icon: ShoppingCart,
