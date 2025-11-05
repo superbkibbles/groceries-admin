@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,8 @@ import {
 } from "@/components/ui/card";
 import { toast } from "sonner";
 import type { HomeSection } from "@/services/homeSectionService";
+import productService, { type Product } from "@/services/productService";
+import categoryService, { type Category } from "@/services/categoryService";
 
 type Props = {
   initialData?: HomeSection;
@@ -31,6 +34,7 @@ export default function HomeSectionForm({
   onSubmit,
   submitting,
 }: Props) {
+  const router = useRouter();
   const [form, setForm] = useState<HomeSection>(
     initialData ??
       ({
@@ -42,12 +46,70 @@ export default function HomeSectionForm({
       } as HomeSection)
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Options for searchable multi-selects
+  const [productOptions, setProductOptions] = useState<
+    Array<Pick<Product, "id" | "name">>
+  >([]);
+  const [productSearch, setProductSearch] = useState("");
+  const [categoryOptions, setCategoryOptions] = useState<
+    Array<Pick<Category, "id" | "name">>
+  >([]);
+  const [categorySearch, setCategorySearch] = useState("");
 
   useEffect(() => {
     if (initialData) setForm(initialData);
   }, [initialData]);
 
   const isProducts = useMemo(() => form.type === "products", [form.type]);
+
+  // Load products on search
+  useEffect(() => {
+    let cancelled = false;
+    if (!isProducts) return;
+    (async () => {
+      try {
+        const res = await productService.getProducts({
+          search: productSearch,
+          limit: 20,
+        });
+        const list = res?.data ?? res; // backend may return {data: Product[]} or Product[]
+        const items: Product[] = Array.isArray(list) ? list : [];
+        if (!cancelled)
+          setProductOptions(items.map((p) => ({ id: p.id, name: p.name })));
+      } catch {
+        if (!cancelled) setProductOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isProducts, productSearch]);
+
+  // When switching back to products, reset search to fetch a fresh list
+  useEffect(() => {
+    if (isProducts) {
+      setProductSearch("");
+    }
+  }, [isProducts]);
+
+  // Load categories once
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await categoryService.getCategories();
+        const list: unknown = res?.data ?? res;
+        const items: Category[] = Array.isArray(list) ? list : [];
+        if (!cancelled)
+          setCategoryOptions(items.map((c) => ({ id: c.id, name: c.name })));
+      } catch {
+        if (!cancelled) setCategoryOptions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleBasicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -74,22 +136,7 @@ export default function HomeSectionForm({
       );
     };
 
-  const handleIdsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target; // name = product_ids | category_ids
-    const ids = value
-      .split(",")
-      .map((v) => v.trim())
-      .filter(Boolean);
-    setForm((prev) => {
-      if (name === "product_ids" && prev.type === "products") {
-        return { ...prev, product_ids: ids } as HomeSection;
-      }
-      if (name === "category_ids" && prev.type === "categories") {
-        return { ...prev, category_ids: ids } as HomeSection;
-      }
-      return prev;
-    });
-  };
+  // legacy single-line input handler removed (now using multi-selects)
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -120,9 +167,35 @@ export default function HomeSectionForm({
     await onSubmit(form);
   };
 
-  const idsValue = isProducts
-    ? (form.type === "products" ? form.product_ids || [] : []).join(", ")
-    : (form.type === "categories" ? form.category_ids || [] : []).join(", ");
+  const selectedIds = isProducts
+    ? form.type === "products"
+      ? form.product_ids || []
+      : []
+    : form.type === "categories"
+    ? form.category_ids || []
+    : [];
+
+  const toggleSelect = (id: string) => {
+    if (isProducts && form.type === "products") {
+      const next = new Set(form.product_ids || []);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      setForm({ ...form, product_ids: Array.from(next) });
+      return;
+    }
+    if (!isProducts && form.type === "categories") {
+      const next = new Set(form.category_ids || []);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      setForm({ ...form, category_ids: Array.from(next) });
+    }
+  };
 
   return (
     <form onSubmit={handleSubmit}>
@@ -212,19 +285,73 @@ export default function HomeSectionForm({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ids">
-              {isProducts
-                ? "Product IDs (comma-separated)"
-                : "Category IDs (comma-separated)"}
-            </Label>
-            <Input
-              id="ids"
-              name={isProducts ? "product_ids" : "category_ids"}
-              value={idsValue}
-              onChange={handleIdsChange}
-              placeholder={isProducts ? "64f..., 64a..." : "64c..., 64b..."}
-            />
+          <div className="space-y-2" key={form.type}>
+            <Label>{isProducts ? "Products" : "Categories"}</Label>
+            {isProducts ? (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Search products..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                />
+                <div className="max-h-56 overflow-auto rounded border">
+                  {(productOptions || []).map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center gap-2 px-3 py-2 border-b last:border-b-0"
+                    >
+                      <Checkbox
+                        id={`prod-${p.id}`}
+                        checked={selectedIds.includes(p.id)}
+                        onCheckedChange={() => toggleSelect(p.id)}
+                      />
+                      <span className="truncate">{p.name}</span>
+                    </label>
+                  ))}
+                  {!productOptions?.length && (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      No products
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Search categories..."
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                />
+                <div className="max-h-56 overflow-auto rounded border">
+                  {(categoryOptions || [])
+                    .filter((c) =>
+                      categorySearch
+                        ? c.name
+                            .toLowerCase()
+                            .includes(categorySearch.toLowerCase())
+                        : true
+                    )
+                    .map((c) => (
+                      <label
+                        key={c.id}
+                        className="flex items-center gap-2 px-3 py-2 border-b last:border-b-0"
+                      >
+                        <Checkbox
+                          id={`cat-${c.id}`}
+                          checked={selectedIds.includes(c.id)}
+                          onCheckedChange={() => toggleSelect(c.id)}
+                        />
+                        <span className="truncate">{c.name}</span>
+                      </label>
+                    ))}
+                  {!categoryOptions?.length && (
+                    <div className="px-3 py-2 text-sm text-muted-foreground">
+                      No categories
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             {errors.product_ids && isProducts && (
               <p className="text-sm text-destructive">{errors.product_ids}</p>
             )}
@@ -243,6 +370,9 @@ export default function HomeSectionForm({
           </div>
         </CardContent>
         <CardFooter className="justify-end gap-2">
+          <Button type="button" variant="outline" onClick={() => router.back()}>
+            Cancel
+          </Button>
           <Button type="submit" disabled={!!submitting}>
             {submitting ? "Saving..." : "Save"}
           </Button>
