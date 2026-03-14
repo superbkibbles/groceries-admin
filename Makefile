@@ -136,7 +136,7 @@ pull: ## Pull latest changes
 
 # Server management
 ssh-server: ## SSH into the server
-	ssh root@91.99.95.75
+	ssh root@37.156.107.164
 
 server-status: ## Check server status
 	@echo "Checking server status..."

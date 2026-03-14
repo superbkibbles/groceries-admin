@@ -20,7 +20,7 @@ services:
       start_period: 40s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.admin.rule=Host(`91.99.95.75`) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.admin.rule=Host(`37.156.107.164`) && PathPrefix(`/admin`)"
 
   backend-api:
     image: groceries-backend-backend:latest  # Replace with your actual backend image

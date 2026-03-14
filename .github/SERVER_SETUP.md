@@ -94,7 +94,7 @@ To enable automated deployment, configure the following secrets in your GitHub r
 
 ```bash
 # SSH into your server
-ssh your-username@91.99.95.75
+ssh your-username@37.156.107.164
 
 # Navigate to application directory
 cd /opt/groceries-admin
@@ -157,7 +157,7 @@ After successful deployment:
 #### 1. SSH Connection Failed
 ```bash
 # Test SSH connection
-ssh -i ~/.ssh/id_rsa your-username@91.99.95.75
+ssh -i ~/.ssh/id_rsa your-username@37.156.107.164
 
 # Check SSH key permissions
 chmod 600 ~/.ssh/id_rsa
