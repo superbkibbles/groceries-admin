@@ -188,8 +188,8 @@ show_status() {
     
     echo ""
     log "Service URLs:"
-    echo "- Admin Panel: http://91.99.95.75/admin"
-    echo "- Health Check: http://91.99.95.75/health"
+    echo "- Admin Panel: http://37.156.107.164/admin"
+    echo "- Health Check: http://37.156.107.164/health"
     
     echo ""
     log "Container Logs:"
@@ -212,7 +212,7 @@ deploy() {
     show_status
     
     success "Deployment completed successfully!"
-    log "Your admin panel is now available at: http://91.99.95.75/admin"
+    log "Your admin panel is now available at: http://37.156.107.164/admin"
 }
 
 # Handle script arguments

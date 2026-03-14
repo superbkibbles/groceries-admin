@@ -17,7 +17,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Set environment variables for build
-ENV NEXT_PUBLIC_API_URL=http://91.99.95.75/api/v1
+ENV NEXT_PUBLIC_API_URL=http://37.156.107.164/api/v1
 ENV NODE_ENV=production
 
 # Build the application
@@ -28,7 +28,7 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_URL=http://91.99.95.75/api/v1
+ENV NEXT_PUBLIC_API_URL=http://37.156.107.164/api/v1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

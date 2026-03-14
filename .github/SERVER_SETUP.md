@@ -62,7 +62,7 @@ nano .env.local
 
 Update the following variables in `.env.local`:
 ```bash
-NEXT_PUBLIC_API_URL=http://91.99.95.75/api/v1
+NEXT_PUBLIC_API_URL=http://37.156.107.164/api/v1
 NODE_ENV=production
 ```
 
@@ -146,9 +146,9 @@ Once GitHub secrets are configured, the deployment will happen automatically on 
 
 After successful deployment:
 
-- **Admin Panel**: http://91.99.95.75/admin
-- **Health Check**: http://91.99.95.75/health
-- **API Endpoint**: http://91.99.95.75/api/v1 (if backend is running)
+- **Admin Panel**: http://37.156.107.164/admin
+- **Health Check**: http://37.156.107.164/health
+- **API Endpoint**: http://37.156.107.164/api/v1 (if backend is running)
 
 ## Troubleshooting
 

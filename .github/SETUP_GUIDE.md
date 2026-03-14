@@ -104,7 +104,7 @@ When deploying to production, set the correct API URL:
 
 ```yaml
 env:
-  NEXT_PUBLIC_API_URL: http://91.99.95.75/api/v1
+  NEXT_PUBLIC_API_URL: http://37.156.107.164/api/v1
 ```
 
 ## 🔗 Integration with Backend
