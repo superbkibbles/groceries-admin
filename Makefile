@@ -29,8 +29,8 @@ type-check: ## Run TypeScript type checking
 docker-build: ## Build Docker images
 	docker compose build
 
-docker-up: ## Start Docker containers
-	docker compose up -d
+docker-up: ## Start Docker containers (rebuilds admin when build args / Dockerfile change)
+	docker compose up -d --build
 
 docker-down: ## Stop and remove Docker containers
 	docker compose down
@@ -80,7 +80,7 @@ health: ## Check application health
 
 health-remote: ## Check remote application health
 	@echo "Checking remote application health..."
-	@curl -f http://37.156.107.164/health || echo "Remote health check failed"
+	@curl -f http://127.0.0.1/health || echo "Remote health check failed"
 
 # Local development with Docker
 local-dev: docker-build docker-up ## Build and start local Docker development environment
@@ -112,7 +112,7 @@ status: ## Show status of all services
 	@curl -s http://localhost/health || echo "Local app not running"
 	@echo ""
 	@echo "=== Remote Application Health ==="
-	@curl -s http://37.156.107.164/health || echo "Remote app not accessible"
+	@curl -s http://127.0.0.1/health || echo "Remote app not accessible"
 
 clean: ## Clean all build artifacts and dependencies
 	rm -rf .next
@@ -136,11 +136,11 @@ pull: ## Pull latest changes
 
 # Server management
 ssh-server: ## SSH into the server
-	ssh root@37.156.107.164
+	ssh root@127.0.0.1
 
 server-status: ## Check server status
 	@echo "Checking server status..."
-	@curl -s http://37.156.107.164/health || echo "Server not accessible"
+	@curl -s http://127.0.0.1/health || echo "Server not accessible"
 
 # Quick development workflow
 quick-start: install dev ## Quick start for development (install + dev)

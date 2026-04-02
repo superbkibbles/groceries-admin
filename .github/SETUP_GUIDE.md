@@ -104,7 +104,7 @@ When deploying to production, set the correct API URL:
 
 ```yaml
 env:
-  NEXT_PUBLIC_API_URL: http://37.156.107.164/api/v1
+  NEXT_PUBLIC_API_URL: http://127.0.0.1/api/v1
 ```
 
 ## 🔗 Integration with Backend
@@ -159,7 +159,7 @@ npm run build
 1. ✅ Push code to GitHub
 2. ✅ Verify CI passes
 3. 🔄 Set up automatic deployment (see deployment guide)
-4. 🚀 Deploy to VPS at 37.156.107.164
+4. 🚀 Deploy to VPS at 127.0.0.1
 
 ## 📚 Additional Resources
 

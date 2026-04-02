@@ -12,6 +12,9 @@ out
 build
 dist
 
+# Use npm + package-lock.json in Docker; avoid Next auto-install trying `pnpm`
+pnpm-lock.yaml
+
 # Environment variables
 .env
 .env.local

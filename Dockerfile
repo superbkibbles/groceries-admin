@@ -8,7 +8,8 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production
+# Full install (needs devDependencies for `next build`: TypeScript, ESLint, etc.)
+RUN npm ci
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -16,8 +17,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Set environment variables for build
-ENV NEXT_PUBLIC_API_URL=http://37.156.107.164/api/v1
+# Baked into the client bundle at build time (override via compose build.args or --build-arg)
+ARG NEXT_PUBLIC_API_URL=http://127.0.0.1/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NODE_ENV=production
 
 # Build the application
@@ -27,8 +29,9 @@ RUN npm run build
 FROM base AS runner
 WORKDIR /app
 
+ARG NEXT_PUBLIC_API_URL=http://127.0.0.1/api/v1
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_API_URL=http://37.156.107.164/api/v1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

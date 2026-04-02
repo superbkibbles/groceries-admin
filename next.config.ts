@@ -1,8 +1,14 @@
 import type { NextConfig } from "next";
 
+const basePath = "/admin";
+
 const nextConfig: NextConfig = {
   /* config options here */
-  basePath: "/admin",
+  basePath,
+  // Client needs this for libs (e.g. UploadThing) that default to `/api/uploadthing` without basePath
+  env: {
+    NEXT_PUBLIC_BASE_PATH: basePath,
+  },
   reactStrictMode: true,
   output: "standalone",
   images: {

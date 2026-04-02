@@ -24,6 +24,9 @@ import { TranslationForm } from "@/components/products/TranslationForm";
 import { Category } from "@/services/categoryService";
 import { Translation } from "@/services/categoryService";
 
+/** Radix Select forbids `SelectItem value=""`; use this for "no parent" instead */
+const NO_PARENT_SELECT_VALUE = "__no_parent__";
+
 interface CategoryFormProps {
   initialData?: {
     id?: string;
@@ -98,7 +101,8 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
   const handleParentCategoryChange = (value: string) => {
     setFormData((prev) => ({
       ...prev,
-      parentId: value || undefined,
+      parentId:
+        value === NO_PARENT_SELECT_VALUE || !value ? undefined : value,
     }));
 
     // Clear parent category error
@@ -249,16 +253,18 @@ const CategoryForm: React.FC<CategoryFormProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="parentId">Parent Category (Optional)</Label>
                 <Select
-                  value={formData.parentId || ""}
+                  value={formData.parentId || NO_PARENT_SELECT_VALUE}
                   onValueChange={handleParentCategoryChange}
                 >
                   <SelectTrigger id="parentId">
                     <SelectValue placeholder="Select a parent category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Parent (Root Category)</SelectItem>
+                    <SelectItem value={NO_PARENT_SELECT_VALUE}>
+                      No Parent (Root Category)
+                    </SelectItem>
                     {availableCategories
-                      .filter((cat) => !cat.parentId) // Only show root categories as potential parents
+                      .filter((cat) => !cat.parentId && cat.id)
                       .map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}

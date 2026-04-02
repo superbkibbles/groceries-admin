@@ -62,7 +62,7 @@ nano .env.local
 
 Update the following variables in `.env.local`:
 ```bash
-NEXT_PUBLIC_API_URL=http://37.156.107.164/api/v1
+NEXT_PUBLIC_API_URL=http://127.0.0.1/api/v1
 NODE_ENV=production
 ```
 
@@ -94,7 +94,7 @@ To enable automated deployment, configure the following secrets in your GitHub r
 
 ```bash
 # SSH into your server
-ssh your-username@37.156.107.164
+ssh your-username@127.0.0.1
 
 # Navigate to application directory
 cd /opt/groceries-admin
@@ -146,9 +146,9 @@ Once GitHub secrets are configured, the deployment will happen automatically on 
 
 After successful deployment:
 
-- **Admin Panel**: http://37.156.107.164/admin
-- **Health Check**: http://37.156.107.164/health
-- **API Endpoint**: http://37.156.107.164/api/v1 (if backend is running)
+- **Admin Panel**: http://127.0.0.1/admin
+- **Health Check**: http://127.0.0.1/health
+- **API Endpoint**: http://127.0.0.1/api/v1 (if backend is running)
 
 ## Troubleshooting
 
@@ -157,7 +157,7 @@ After successful deployment:
 #### 1. SSH Connection Failed
 ```bash
 # Test SSH connection
-ssh -i ~/.ssh/id_rsa your-username@37.156.107.164
+ssh -i ~/.ssh/id_rsa your-username@127.0.0.1
 
 # Check SSH key permissions
 chmod 600 ~/.ssh/id_rsa

@@ -25,7 +25,7 @@ const authService = {
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     const response = await api.post("/users/login-admin", credentials, {
       headers: {
-        user_role: "admin",
+        "user-role": "admin",
       },
     });
     // Store token in localStorage
@@ -71,7 +71,7 @@ const authService = {
   changePassword: async (
     userId: string,
     currentPassword: string,
-    newPassword: string
+    newPassword: string,
   ) => {
     const response = await api.put(`/users/${userId}/password`, {
       currentPassword,

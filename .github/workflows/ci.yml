@@ -37,7 +37,7 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          NEXT_PUBLIC_API_URL: http://37.156.107.164/api/v1
+          NEXT_PUBLIC_API_URL: http://127.0.0.1/api/v1
 
       - name: Run tests
         run: |
@@ -85,7 +85,7 @@ jobs:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: 37.156.107.164
+          host: 127.0.0.1
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
@@ -96,7 +96,7 @@ jobs:
       - name: Verify deployment
         uses: appleboy/ssh-action@v1.0.0
         with:
-          host: 37.156.107.164
+          host: 127.0.0.1
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
