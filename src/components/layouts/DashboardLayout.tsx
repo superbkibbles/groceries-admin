@@ -32,6 +32,8 @@ interface DashboardLayoutProps {
   children: ReactNode;
 }
 
+const publicBase = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const router = useRouter();
   const dispatch = useAppDispatch();
@@ -91,14 +93,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         }`}
       >
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
-          <Link href="/dashboard" className="flex items-center space-x-2">
+          <Link
+            href="/dashboard"
+            className="flex items-center space-x-2"
+            aria-label={t("navigation.dashboard")}
+          >
             <span className="text-xl font-bold">
               <Image
-                src="/logo.png"
-                alt="logo"
+                src={`${publicBase}/logo.png`}
+                alt=""
                 width={70}
                 height={90}
                 className="object-contain"
+                priority
               />
             </span>
           </Link>

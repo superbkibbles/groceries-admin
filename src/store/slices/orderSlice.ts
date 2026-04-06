@@ -58,12 +58,50 @@ export const updateOrderStatus = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await orderService.updateOrderStatus(orderId, status);
-      return response;
+      const order = await orderService.updateOrderStatus(orderId, status);
+      return order;
     } catch (error: unknown) {
       return rejectWithValue(
         (error as { response?: { data?: { error?: string } } })?.response?.data
           ?.error || "Failed to update order status"
+      );
+    }
+  }
+);
+
+function rejectMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === "object" && "response" in error) {
+    const d = (error as { response?: { data?: { error?: string } } }).response
+      ?.data?.error;
+    if (d) return d;
+  }
+  if (error instanceof Error) return error.message;
+  return fallback;
+}
+
+/** Shipped (auto paid if pending) — see orderService.markAsShipped */
+export const markOrderShipped = createAsyncThunk(
+  "orders/markOrderShipped",
+  async (orderId: string, { rejectWithValue }) => {
+    try {
+      return await orderService.markAsShipped(orderId);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        rejectMessage(error, "Failed to mark order as shipped")
+      );
+    }
+  }
+);
+
+/** Delivered — only from shipped */
+export const markOrderDelivered = createAsyncThunk(
+  "orders/markOrderDelivered",
+  async (orderId: string, { rejectWithValue }) => {
+    try {
+      return await orderService.markAsDelivered(orderId);
+    } catch (error: unknown) {
+      return rejectWithValue(
+        rejectMessage(error, "Failed to mark order as delivered")
       );
     }
   }
@@ -76,7 +114,7 @@ export const updatePaymentStatus = createAsyncThunk(
     {
       orderId,
       paymentStatus,
-    }: { orderId: string; paymentStatus: Order["paymentStatus"] },
+    }: { orderId: string; paymentStatus: string },
     { rejectWithValue }
   ) => {
     try {
@@ -152,8 +190,8 @@ const orderSlice = createSlice({
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
-        state.orders = action.payload.data;
-        state.totalOrders = action.payload.total;
+        state.orders = action.payload.data ?? [];
+        state.totalOrders = action.payload.total ?? 0;
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;
@@ -192,6 +230,40 @@ const orderSlice = createSlice({
         }
       })
       .addCase(updateOrderStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(markOrderShipped.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(markOrderShipped.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentOrder = action.payload;
+        const index = state.orders.findIndex(
+          (order) => order.id === action.payload.id
+        );
+        if (index !== -1) state.orders[index] = action.payload;
+      })
+      .addCase(markOrderShipped.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+
+      .addCase(markOrderDelivered.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(markOrderDelivered.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentOrder = action.payload;
+        const index = state.orders.findIndex(
+          (order) => order.id === action.payload.id
+        );
+        if (index !== -1) state.orders[index] = action.payload;
+      })
+      .addCase(markOrderDelivered.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })

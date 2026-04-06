@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 import { userService, orderService } from "@/services";
+import type { Order as CustomerOrder } from "@/services/orderService";
 import {
   Mail,
   Calendar,
@@ -57,31 +58,12 @@ interface Address {
   updatedAt: string;
 }
 
-interface OrderItem {
-  id: string;
-  productId: string;
-  quantity: number;
-  price: number;
-  name: string;
-}
-
-interface Order {
-  id: string;
-  userId: string;
-  orderNumber: string;
-  status: string;
-  totalAmount: number;
-  items: OrderItem[];
-  shippingAddress: Address;
-  createdAt: string;
-}
-
 export default function CustomerDetail() {
   const router = useRouter();
   const { id } = router.query;
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
 

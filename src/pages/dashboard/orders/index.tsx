@@ -10,6 +10,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -22,16 +30,41 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Search, MoreHorizontal, Eye, Package, XCircle } from "lucide-react";
+import { Filter, MoreHorizontal, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { fetchOrders, updateOrderStatus } from "@/store/slices/orderSlice";
+import {
+  fetchOrders,
+  updateOrderStatus,
+  markOrderShipped,
+  markOrderDelivered,
+} from "@/store/slices/orderSlice";
+import {
+  orderStatusAdminLabel,
+  type OrderStatus,
+} from "@/services/orderService";
 
-// Default pagination values
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
+
+const STATUS_OPTIONS: { value: OrderStatus | "all"; label: string }[] = [
+  { value: "all", label: "All statuses" },
+  { value: "pending", label: orderStatusAdminLabel("pending") },
+  { value: "paid", label: orderStatusAdminLabel("paid") },
+  { value: "shipped", label: orderStatusAdminLabel("shipped") },
+  { value: "delivered", label: orderStatusAdminLabel("delivered") },
+  { value: "cancelled", label: orderStatusAdminLabel("cancelled") },
+];
+
+function formatMoney(n: number) {
+  return n.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+}
 
 export default function Orders() {
   const router = useRouter();
@@ -39,26 +72,39 @@ export default function Orders() {
   const { orders, totalOrders, loading, error } = useAppSelector(
     (state) => state.orders
   );
-  const [searchQuery, setSearchQuery] = useState("");
+  const [customerIdInput, setCustomerIdInput] = useState("");
+  const [appliedCustomerId, setAppliedCustomerId] = useState("");
+  const [statusSelect, setStatusSelect] = useState<OrderStatus | "all">("all");
   const [currentPage, setCurrentPage] = useState(DEFAULT_PAGE);
   const [limit] = useState(DEFAULT_LIMIT);
 
-  // Fetch orders on component mount and when pagination changes
   useEffect(() => {
-    dispatch(fetchOrders({ page: currentPage, limit }));
-  }, [dispatch, currentPage, limit]);
+    dispatch(
+      fetchOrders({
+        page: currentPage,
+        limit,
+        customerId: appliedCustomerId.trim() || undefined,
+        status:
+          statusSelect === "all" ? undefined : (statusSelect as OrderStatus),
+      })
+    );
+  }, [dispatch, currentPage, limit, appliedCustomerId, statusSelect]);
 
-  // Filter orders based on search query
-  const filteredOrders = orders.filter(
-    (order) =>
-      (order.id &&
-        order.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (order.userId &&
-        order.userId.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const handleApplyFilters = () => {
+    const next = customerIdInput.trim();
+    if (next && !/^[a-f\d]{24}$/i.test(next)) {
+      toast.error("Customer ID must be a 24-character hex value (Mongo ObjectId).");
+      return;
+    }
+    setAppliedCustomerId(next);
+    setCurrentPage(1);
+  };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleClearFilters = () => {
+    setCustomerIdInput("");
+    setAppliedCustomerId("");
+    setStatusSelect("all");
+    setCurrentPage(1);
   };
 
   const handleViewOrder = (id: string) => {
@@ -69,12 +115,29 @@ export default function Orders() {
     setCurrentPage(page);
   };
 
-  const handleUpdateStatus = (
-    orderId: string,
-    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled"
-  ) => {
-    dispatch(updateOrderStatus({ orderId, status }));
-    toast.success(`Order status updated to ${status}`);
+  const handleCancelOrder = (orderId: string) => {
+    dispatch(updateOrderStatus({ orderId, status: "cancelled" }));
+    toast.success("Order cancelled");
+  };
+
+  const handleMarkShipped = async (orderId: string) => {
+    const result = await dispatch(markOrderShipped(orderId));
+    if (markOrderShipped.fulfilled.match(result)) {
+      toast.success(
+        "Order marked as shipped — paid set automatically when required"
+      );
+    } else {
+      toast.error((result.payload as string) || "Could not mark as shipped");
+    }
+  };
+
+  const handleMarkDelivered = async (orderId: string) => {
+    const result = await dispatch(markOrderDelivered(orderId));
+    if (markOrderDelivered.fulfilled.match(result)) {
+      toast.success("Order marked as delivered");
+    } else {
+      toast.error((result.payload as string) || "Could not mark as delivered");
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -90,7 +153,6 @@ export default function Orders() {
     switch (status?.toLowerCase()) {
       case "delivered":
         return "bg-green-100 text-green-800";
-      case "processing":
       case "pending":
       case "paid":
         return "bg-blue-100 text-blue-800";
@@ -116,24 +178,62 @@ export default function Orders() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Order History</CardTitle>
+              <CardTitle>Order history</CardTitle>
             </div>
-            <CardDescription>A list of all customer orders.</CardDescription>
+            <CardDescription>
+              Filter by customer ID and/or status (server-side). Leave customer
+              empty for all customers.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center py-4">
-              <div className="relative w-full max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col gap-4 py-2 md:flex-row md:flex-wrap md:items-end">
+              <div className="grid w-full max-w-md gap-2">
+                <Label htmlFor="orders-customer-id">Customer ID</Label>
                 <Input
-                  placeholder="Search orders..."
-                  value={searchQuery}
-                  onChange={handleSearch}
-                  className="w-full pl-8"
+                  id="orders-customer-id"
+                  placeholder="24-char Mongo ObjectId (optional)"
+                  value={customerIdInput}
+                  onChange={(e) => setCustomerIdInput(e.target.value)}
+                  className="font-mono text-sm"
                 />
+              </div>
+              <div className="grid w-full max-w-xs gap-2">
+                <Label>Status</Label>
+                <Select
+                  value={statusSelect}
+                  onValueChange={(v) => {
+                    setStatusSelect(v as OrderStatus | "all");
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="button" onClick={handleApplyFilters}>
+                  <Filter className="mr-2 h-4 w-4" />
+                  Apply filters
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleClearFilters}
+                >
+                  Clear
+                </Button>
               </div>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border mt-6">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -150,7 +250,7 @@ export default function Orders() {
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center">
                         <div className="flex justify-center items-center">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
                           <span className="ml-2">Loading orders...</span>
                         </div>
                       </TableCell>
@@ -164,22 +264,20 @@ export default function Orders() {
                         Error loading orders: {error}
                       </TableCell>
                     </TableRow>
-                  ) : filteredOrders.length === 0 ? (
+                  ) : orders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-24 text-center">
-                        No orders found.
+                        No orders match these filters.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredOrders.map((order) => (
+                    orders.map((order) => (
                       <TableRow key={order.id}>
-                        <TableCell className="font-medium">
-                          {order.id || "N/A"}
+                        <TableCell className="font-medium font-mono text-xs max-w-[140px] truncate">
+                          {order.id || "—"}
                         </TableCell>
-                        <TableCell>
-                          <div>
-                            <p>{order.userId || "N/A"}</p>
-                          </div>
+                        <TableCell className="font-mono text-xs max-w-[120px] truncate">
+                          {order.customerId || "—"}
                         </TableCell>
                         <TableCell>{formatDate(order.createdAt)}</TableCell>
                         <TableCell>
@@ -188,15 +286,10 @@ export default function Orders() {
                               order.status
                             )}`}
                           >
-                            {order.status
-                              ? order.status.charAt(0).toUpperCase() +
-                                order.status.slice(1)
-                              : "Unknown"}
+                            {orderStatusAdminLabel(order.status)}
                           </span>
                         </TableCell>
-                        <TableCell>
-                          ${order.total ? order.total.toFixed(2) : "0.00"}
-                        </TableCell>
+                        <TableCell>{formatMoney(order.total)}</TableCell>
                         <TableCell className="text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -212,25 +305,27 @@ export default function Orders() {
                                 <Eye className="mr-2 h-4 w-4" />
                                 View details
                               </DropdownMenuItem>
-                              {order.status !== "shipped" &&
-                                order.status !== "delivered" && (
+                              <DropdownMenuSeparator />
+                              {(order.status === "pending" ||
+                                order.status === "paid") && (
+                                <>
                                   <DropdownMenuItem
-                                    onClick={() =>
-                                      handleUpdateStatus(order.id, "shipped")
-                                    }
+                                    onClick={() => handleMarkShipped(order.id)}
                                   >
-                                    <Package className="mr-2 h-4 w-4" />
                                     Mark as shipped
                                   </DropdownMenuItem>
-                                )}
-                              {order.status !== "cancelled" && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleCancelOrder(order.id)}
+                                  >
+                                    Cancel order
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {order.status === "shipped" && (
                                 <DropdownMenuItem
-                                  onClick={() =>
-                                    handleUpdateStatus(order.id, "cancelled")
-                                  }
+                                  onClick={() => handleMarkDelivered(order.id)}
                                 >
-                                  <XCircle className="mr-2 h-4 w-4" />
-                                  Cancel order
+                                  Mark as delivered
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -243,7 +338,6 @@ export default function Orders() {
               </Table>
             </div>
 
-            {/* Pagination */}
             {!loading && totalOrders > 0 && (
               <div className="flex items-center justify-between space-x-2 py-4">
                 <div className="text-sm text-muted-foreground">
