@@ -47,9 +47,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized errors
-    if (error.response && error.response.status === 401) {
-      // Clear token and redirect to login if unauthorized
+    // Handle 401 Unauthorized errors, but not on the login request itself
+    const isLoginRequest = error.config?.url?.includes("/users/login-admin");
+    if (error.response && error.response.status === 401 && !isLoginRequest) {
       localStorage.removeItem("token");
       if (typeof window !== "undefined") {
         window.location.href = "/login";
